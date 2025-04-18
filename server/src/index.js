@@ -18,7 +18,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: 'process.env.SESSION_SECRET',
   resave: false,
   saveUninitialized: false
 }));
@@ -28,5 +28,5 @@ app.use(passport.session());
 app.use('/auth', authRoutes);
 
 sequelize.sync().then(() => {
-  app.listen(process.env.BE_PORT, () => console.log('Server started at http://localhost:5000'));
+  app.listen(5000, () => console.log('Server started at http://localhost:5000'));
 });

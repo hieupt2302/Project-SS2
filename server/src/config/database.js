@@ -1,14 +1,13 @@
 const { Sequelize } = require('sequelize');
-require('dotenv').config();
 
 const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
+  'SS2',           // Tên cơ sở dữ liệu
+  'root',          // Tên người dùng MySQL
+  'your_password', // Mật khẩu người dùng MySQL
   {
-    host: process.env.DB_HOST,
-    dialect: 'mysql',
-    logging: false
+    host: 'localhost', // Địa chỉ máy chủ MySQL (thay localhost nếu bạn có host khác)
+    dialect: 'mysql',  // Chọn MySQL làm dialect
+    logging: false     
   }
 );
 

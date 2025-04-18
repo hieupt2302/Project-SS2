@@ -1,6 +1,6 @@
 const loginSuccess = (req, res) => {
     if (req.user) {
-      res.redirect(`${process.env.FRONTEND_URL}/settings`);
+      res.redirect(`/settings`);
     } else {
       res.status(401).json({ message: 'Not authenticated' });
     }
