@@ -1,20 +1,12 @@
-const bcrypt = require('bcrypt');
-const { User } = require('../models');
+const { User } = require('../models/User');
 
-const changePassword = async (req, res) => {
+exports.changePassword = async (req, res) => {
   try {
-    const { newPassword } = req.body;
-    if (!newPassword) return res.status(400).json({ message: 'New password required' });
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    req.user.password = hashedPassword;
-    await req.user.save();
-
-    res.json({ message: 'Password updated successfully' });
+    const { password } = req.body;
+    const userId = req.user.id;
+    await User.update({ password }, { where: { id: userId } });
+    res.json({ message: 'Password updated' });
   } catch (err) {
-    console.error('Change password error:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ error: err.message });
   }
 };
-
-module.exports = { changePassword };

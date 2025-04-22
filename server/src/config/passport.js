@@ -1,5 +1,5 @@
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const { User } = require('../models/User'); // Adjust the path as necessary
+const { User } = require('../models/User');
 
 module.exports = (passport) => {
   passport.use(new GoogleStrategy({
@@ -13,7 +13,8 @@ module.exports = (passport) => {
         where: { email: profile.emails[0].value },
         defaults: {
           googleId: profile.id,
-          email: profile.emails[0].value
+          email: profile.emails[0].value,
+          name: profile.displayName
         }
       });
       return done(null, user);

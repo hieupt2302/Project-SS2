@@ -1,17 +1,15 @@
 const { Sequelize } = require('sequelize');
 
 const sequelize = new Sequelize(
-  'SS2',           // Tên cơ sở dữ liệu
-  'root',          // Tên người dùng MySQL
-  'your_password', // Mật khẩu người dùng MySQL
+  'SS2',           // DB name
+  'root',          // MySQL username
+  process.env.MYSQL_PROJECT_PASSWORD, // Your MySQL password
   {
-    host: 'localhost', // Địa chỉ máy chủ MySQL (thay localhost nếu bạn có host khác)
-    dialect: 'mysql',  // Chọn MySQL làm dialect
-    logging: false     
+    host: 'localhost',
+    dialect: 'mysql',
+    logging: false
   }
 );
 
 module.exports = sequelize;
 
-
-// SƠN code

@@ -1,17 +1,18 @@
-const loginSuccess = (req, res) => {
-    if (req.user) {
-      res.redirect(`/settings`);
-    } else {
-      res.status(401).json({ message: 'Not authenticated' });
-    }
-  };
-  
-  const logout = (req, res) => {
-    req.logout(err => {
-      if (err) return res.status(500).json({ message: 'Logout failed' });
-      res.json({ message: 'Logged out' });
+exports.loginSuccess = (req, res) => {
+  if (req.user) {
+    res.status(200).json({
+      message: "Login successful",
+      user: req.user
     });
-  };
-  
-  module.exports = { loginSuccess, logout };
+  } else {
+    res.status(401).json({ message: "Not authenticated" });
+  }
+};
+
+exports.logout = (req, res) => {
+  req.logout(() => {
+    res.redirect('http://localhost:5173'); // or send JSON if frontend expects
+  });
+};
+
   

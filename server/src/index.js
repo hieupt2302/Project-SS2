@@ -8,17 +8,20 @@ const sequelize = require('./config/database');
 require('./config/passport')(passport);
 
 const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+const settingRoutes = require('./routes/settingRoutes');
 
 const app = express();
 app.use(cors({
-  origin: 'http://localhost:5173', // Chỉ cho phép yêu cầu từ http://localhost:5173
+  origin: 'http://localhost:5173',
   methods: 'GET,POST,PUT,DELETE',
-  credentials: true, // Cho phép cookie được gửi trong yêu cầu từ client
+  credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+
 app.use(session({
-  secret: 'process.env.SESSION_SECRET',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false
 }));
@@ -26,6 +29,8 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use('/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/settings', settingRoutes);
 
 sequelize.sync().then(() => {
   app.listen(5000, () => console.log('Server started at http://localhost:5000'));
