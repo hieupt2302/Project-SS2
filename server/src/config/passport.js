@@ -1,5 +1,5 @@
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const { User } = require('../models/User'); // Adjust the path as necessary
+const { Users } = require('../models/User'); // Adjust the path as necessary
 
 module.exports = (passport) => {
   passport.use(new GoogleStrategy({
@@ -9,7 +9,7 @@ module.exports = (passport) => {
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
-      const [user] = await User.findOrCreate({
+      const [user] = await Users.findOrCreate({
         where: { email: profile.emails[0].value },
         defaults: {
           googleId: profile.id,
@@ -22,9 +22,24 @@ module.exports = (passport) => {
     }
   }));
 
-  passport.serializeUser((user, done) => done(null, user.id));
+  passport.serializeUser((user, done) => {
+    console.log('Serializing user:', user);
+    done(null, user.id)
+  });
   passport.deserializeUser(async (id, done) => {
-    const user = await User.findByPk(id);
-    done(null, user);
+    console.log('Deserializing user with id:', id);
+    const user1 = await Users.findByPk(id);
+    console.log('User found:', user1);
+
+    try {
+      console.log('Deserializing user with ID:', id);
+      const user = await Users.findByPk(id);
+      if (!user) {
+        return done(new Error('User not found'), null);
+      }
+      done(null, user);
+    } catch (err) {
+      done(err, null);
+    }
   });
 };
