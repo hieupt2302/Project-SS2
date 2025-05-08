@@ -1,12 +1,16 @@
+const { generateToken } = require("../middlewares/jwt");
 const loginSuccess = (req, res) => {
-  if (req.user) {
-    console.log('User logged in:', req.user);
-    res.status(200).json({
-      user: req.user // Trả về thông tin người dùng
+  const token = generateToken(req.user);
+
+        // Set JWT cookie (httpOnly)
+  res.cookie('jwt', token, {
+    httpOnly: true,
+    secure: false, // true if using HTTPS
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 1000 // 1 hour
     });
-  } else {
-    res.status(401).json({ message: 'Not authenticated' });
-  }
+  console.log('JWT:', token);
+  res.redirect('http://localhost:5173/settings'); // Redirect to settings page after login
 };
   
 const logout = (req, res) => {

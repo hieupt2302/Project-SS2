@@ -11,11 +11,12 @@ const LoginPage = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await fetch('http://localhost:5000/auth/me', {
+        const res = await fetch('http://localhost:5000/user', {
           method: 'GET',
           credentials: 'include'
         });
         const data = await res.json();
+        console.log('User:', data);
         if (data && data.id) {
           login(data);
           navigate('/settings');

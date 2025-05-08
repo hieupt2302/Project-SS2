@@ -1,8 +1,23 @@
-const { Users } = require('../models/User');
-const { Recipe } = require('../models/Recipe');
+const { Users } = require('./User');
+const { Recipe } = require('./Recipe');
+const { Comment } = require('./Comment');
+const { WeeklyMealPlan } = require('./WeeklyMealPlan');
 
-// Define associations
-Users.hasMany(Recipe, { foreignKey: 'authorID' });
-Recipe.belongsTo(Users, { foreignKey: 'authorID' });
+// Comment relations
+Users.hasMany(Comment, { foreignKey: 'user_id' });
+Recipe.hasMany(Comment, { foreignKey: 'recipe_id' });
+Comment.belongsTo(Users, { foreignKey: 'user_id' });
+Comment.belongsTo(Recipe, { foreignKey: 'recipe_id' });
 
-module.exports = { Users, Recipe };
+// WeeklyMealPlan relations
+Users.hasMany(WeeklyMealPlan, { foreignKey: 'user_id' });
+Recipe.hasMany(WeeklyMealPlan, { foreignKey: 'recipe_id' });
+WeeklyMealPlan.belongsTo(Users, { foreignKey: 'user_id' });
+WeeklyMealPlan.belongsTo(Recipe, { foreignKey: 'recipe_id' });
+
+module.exports = {
+  Users,
+  Recipe,
+  Comment,
+  WeeklyMealPlan,
+};

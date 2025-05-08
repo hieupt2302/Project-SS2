@@ -15,7 +15,7 @@ function App() {
           <Route path="/home" element={<HomePage />} />
           <Route
             path="/settings"
-            element={
+            element={ 
               <PrivateRoute>
                 <SettingsPage />
               </PrivateRoute>
