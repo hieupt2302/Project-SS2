@@ -12,6 +12,7 @@ require('./models/associations');  // Kết nối các model và associations
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const recipeRoutes = require('./routes/recipeRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 const { fetchAndSaveUsers, fetchAndSaveRecipes } = require('./config/fetchRecipe');
 
 const app = express();
@@ -46,6 +47,7 @@ app.use(passport.session());
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes)
 app.use('/recipes', recipeRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Kết nối với cơ sở dữ liệu và khởi động server
 sequelize.sync().then(async () => {
