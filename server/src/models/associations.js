@@ -1,6 +1,6 @@
 const { Users } = require('./User');
 const { Recipe } = require('./Recipe');
-const { Comment } = require('./Comment');
+const { Comment } = require('./comment');
 const { WeeklyMealPlan } = require('./WeeklyMealPlan');
 
 // Comment relations

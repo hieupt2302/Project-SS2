@@ -35,3 +35,18 @@ exports.createRecipe = async (req, res) => {
     res.status(500).json({ message: 'Error creating recipe', error: err.message });
   }
 };
+
+exports.updateRecipe = async (req, res) => {
+  const { recipeID } = req.params;
+  const { title, description, ingredients, instructions } = req.body;
+
+  try {
+    const recipe = await Recipe.findByPk(recipeID);
+    if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
+
+    await recipe.update({ title, description, ingredients, instructions });
+    res.json({ message: 'Recipe updated', recipe });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update recipe' });
+  }
+};
