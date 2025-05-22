@@ -7,6 +7,7 @@ import './index.css'
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import RecipeDetail from './components/RecipeDetail';
+import CreateRecipe from './pages/CreateRecipe';
 
 function App() {
 
@@ -18,6 +19,7 @@ function App() {
         <Routes>
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/create" element={<CreateRecipe />} />
           <Route path="/recipes/:id" element={<RecipeDetail />} />
         </Routes>
     </BrowserRouter>

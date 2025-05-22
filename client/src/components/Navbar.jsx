@@ -5,7 +5,7 @@ import axios from 'axios';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState('user');
 
 //   useEffect(() => {
 //     // Fetch current user
