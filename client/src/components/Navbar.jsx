@@ -1,35 +1,28 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, PlusCircle } from 'lucide-react';
-import axios from 'axios';
+import { PlusCircle } from 'lucide-react';
+import { checkUser } from '../../utils/auth';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const [currentUser, setCurrentUser] = useState('user');
+  const [currentUser, setCurrentUser] = useState(null);
 
-//   useEffect(() => {
-//     // Fetch current user
-//     const fetchUser = async () => {
-//       try {
-//         const res = await axios.get('http://localhost:5000/auth/google/callback', {
-//           withCredentials: true,
-//         });
-//         setCurrentUser(res.data.user || res.data); // Adjust as needed
-//       } catch (err) {
-//         console.log("User not authenticated");
-//       }
-//     };
-//     fetchUser();
-//   }, []);
+  useEffect(() => {
+    const load = async () => {
+      const user = await checkUser();
+      if (user) setCurrentUser(user);
+    };
+    load();
+  }, []);
 
   const handleProfileClick = () => {
     if (!currentUser) return;
-    if (currentUser.role === 'admin') {
-        navigate('/admin-dashboard');
-    } else {
-        navigate('/user-dashboard');
-    }
+    navigate(currentUser.role === 'admin' ? '/admin-dashboard' : '/user-dashboard');
   };
+
+  const profileImage = currentUser?.imageUrl
+    ? currentUser.imageUrl
+    : `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.name || 'User')}&background=random`;
 
   return (
     <nav className="flex items-center justify-between px-6 py-4 bg-yellow-100 shadow-md">
@@ -57,16 +50,19 @@ const Navbar = () => {
           Create
         </button>
 
-        {/* Profile Icon */}
-        <button
-          onClick={handleProfileClick}
-          className="bg-white border border-yellow-400 rounded-full p-2 hover:bg-yellow-200 transition"
-        >
-          <User className="w-5 h-5 text-yellow-700" />
-        </button>
+        {/* Profile Image */}
+        {currentUser && (
+          <img
+            src={profileImage}
+            alt="Profile"
+            onClick={handleProfileClick}
+            className="w-10 h-10 rounded-full border-2 border-yellow-500 cursor-pointer hover:scale-105 transition"
+          />
+        )}
       </div>
     </nav>
   );
 };
 
 export default Navbar;
+

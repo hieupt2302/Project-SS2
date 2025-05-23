@@ -9,14 +9,14 @@ const heroSlides = [
   {
     id: 2,
     image:
-      'https://cdn.tasteatlas.com/images/dishes/edfd43723de64602a6b9d8016d43e24b.jpg?mw=1300',
+      'https://deliciousvietnam.net/wp-content/uploads/2020/05/Pho-Bo-Chin-Pho-Noodle-Soup-Beef-Briskets-1-1600x1113.jpeg',
     title: 'Pho Bo Vietnam',
     subtitle: 'A bowl of soul. Fragrant, rich, and deeply satisfying.',
   },
   {
     id: 3,
     image:
-      'https://www.cubesnjuliennes.com/wp-content/uploads/2020/07/Butter-Chicken.jpg',
+      'https://www.indianhealthyrecipes.com/wp-content/uploads/2023/04/butter-chicken-recipe.jpg',
     title: 'Butter Chicken',
     subtitle: 'Creamy. Spicy. Iconic. Indian comfort food at its finest.',
   },
