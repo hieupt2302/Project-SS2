@@ -4,8 +4,9 @@ const passport = require('passport');
 const cors = require('cors');
 require('dotenv').config();
 
+require('./config/passport');
+
 const sequelize = require('./config/database');
-require('./config/passport')(passport);
 
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -13,12 +14,14 @@ const settingRoutes = require('./routes/settingRoutes');
 const recipeRoutes = require('./routes/recipeRoutes');
 
 const app = express();
+
 app.use(cors({
   origin: 'http://localhost:5173',
   methods: 'GET,POST,PUT,DELETE',
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 app.use(express.json());
 
 app.use(session({
@@ -26,6 +29,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false
 }));
+
 app.use(passport.initialize());
 app.use(passport.session());
 

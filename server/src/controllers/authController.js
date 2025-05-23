@@ -1,3 +1,5 @@
+// server/src/controller/authController.js
+
 exports.loginSuccess = (req, res) => {
   if (req.user) {
     res.status(200).json({

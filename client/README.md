@@ -10,6 +10,12 @@ npm run dev
 node src/index.js
 ```
 
+## SERVER/ENV
+```bash
+SESSION_SECRET=
+MYSQL_PROJECT_PASSWORD=
+```
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
