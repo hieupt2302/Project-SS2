@@ -2,11 +2,38 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { checkUser } from '../../utils/auth';
 import axios from 'axios';
+import { Pencil, Trash } from 'lucide-react';
+import EditRecipeModal from '../components/EditRecipeModal';
 
 const UserDashboard = () => {
   const [user, setUser] = useState(null);
   const [recipes, setRecipes] = useState([]);
   const navigate = useNavigate();
+  const [editingRecipe, setEditingRecipe] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleEdit = (recipe) => {
+    setEditingRecipe(recipe);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Are you sure you want to delete this recipe?')) return;
+
+    try {
+      await axios.delete(`http://localhost:5000/api/recipes/${id}`, { withCredentials: true });
+      setRecipes(recipes.filter((r) => r.id !== id));
+    } catch (err) {
+      alert('Delete failed: ' + err.message);
+    }
+  };
+
+  // for edit save
+  const handleSave = (id, updated) => {
+    setRecipes((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, ...updated } : r))
+    );
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -54,11 +81,33 @@ const UserDashboard = () => {
                 <p className="text-sm text-gray-600 mb-2 line-clamp-2">{recipe.ingredients}</p>
                 <p className="text-sm text-gray-500 mb-2 line-clamp-3">{recipe.instructions}</p>
                 {/* Future: Add Edit/Delete buttons here */}
+                <div className="flex justify-end mt-3">
+                  <button
+                    className="text-sm bg-blue-600 py-1 px-5 rounded-2xl hover:underline"
+                    onClick={() => handleEdit(recipe)}
+                  >
+                    <Pencil className='w-6 h-6 text-white'/>
+                  </button>
+                  <button
+                    className="text-sm bg-red-600 py-1 px-5 rounded-2xl hover:underline"
+                    onClick={() => handleDelete(recipe.id)}
+                  >
+                    <Trash className='w-6 h-6 text-white'/>
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
         )}
       </div>
+
+      {/* User Recipe Update Modal */}
+        <EditRecipeModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          recipe={editingRecipe}
+          onSave={handleSave}
+        />
     </div>
   );
 };
