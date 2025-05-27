@@ -5,6 +5,7 @@ const LocalStrategy = require('passport-local').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const bcrypt = require('bcryptjs');
 const { User } = require('../models/User');
+const { Op } = require('sequelize');
 require('dotenv').config();
 
 // Serialize/Deserialize
@@ -27,21 +28,34 @@ passport.use(new LocalStrategy({ usernameField: 'email' }, async (email, passwor
 }));
 
 // Google Strategy
+// Đảm bảo rằng nếu email đã tồn tại thì không tạo mới user trùng lặp.
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
   callbackURL: '/auth/google/callback'
 }, async (accessToken, refreshToken, profile, done) => {
   try {
-    let user = await User.findOne({ where: { googleId: profile.id } });
+    const email = profile.emails[0].value;
+
+    let user = await User.findOne({
+      where: {
+        [Op.or]: [{ googleId: profile.id }, { email }]
+      }
+    });
+
     if (!user) {
       user = await User.create({
         googleId: profile.id,
         name: profile.displayName,
-        email: profile.emails[0].value,
-        role: 'user' // Auto user from Google login
+        email,
+        role: 'user'
       });
+    } else if (!user.googleId) {
+      // Link Google ID to existing email-based user
+      user.googleId = profile.id;
+      await user.save();
     }
+
     return done(null, user);
   } catch (err) {
     return done(err);
