@@ -15,7 +15,7 @@ const AuthPage = () => {
       >
         Sign in with Google
       </a>
-      <form method="POST" action="/auth/login" className="bg-white shadow-md rounded px-8 pt-6 pb-8 w-96">
+      <form method="POST" action="http://localhost:5000/auth/login" className="bg-white shadow-md rounded px-8 pt-6 pb-8 w-96">
         <h2 className="text-lg font-semibold mb-4">Sign in with Email</h2>
         <input
           name="email"

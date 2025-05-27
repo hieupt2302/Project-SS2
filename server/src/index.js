@@ -22,12 +22,17 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+app.use(express.urlencoded({ extended: true })); // <-- THÊM DÒNG NÀY
 app.use(express.json());
 
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  cookie: {
+    secure: false, // true nếu dùng HTTPS
+    httpOnly: true
+  }
 }));
 
 app.use(passport.initialize());

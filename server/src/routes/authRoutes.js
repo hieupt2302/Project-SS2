@@ -7,20 +7,36 @@ const { User } = require('../models/User');
 const router = express.Router();
 
 // Register with email
+// Check if email already exists
 router.post('/register', async (req, res) => {
   const { name, email, password } = req.body;
-  const hashed = await bcrypt.hash(password, 10);
+
   try {
-    const user = await User.create({ name, email, password: hashed });
-    res.status(201).json(user);
+    const existing = await User.findOne({ where: { email } });
+    if (existing) {
+      return res.status(400).json({ message: 'Email already exists' });
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+    const newUser = await User.create({ name, email, password: hashed });
+    res.status(201).json(newUser);
   } catch (err) {
-    res.status(400).json({ error: 'Email may already exist.' });
+    res.status(500).json({ error: 'Something went wrong' });
   }
 });
 
+
 // Login with email
-router.post('/login', passport.authenticate('local'), (req, res) => {
-  res.json(req.user);
+router.post('/login', (req, res, next) => {
+  passport.authenticate('local', (err, user, info) => {
+    if (err) return next(err);
+    if (!user) return res.status(401).json({ message: info.message || 'Login failed' });
+
+    req.logIn(user, (err) => {
+      if (err) return next(err);
+      return res.status(200).json({ message: 'Login successful', user });
+    });
+  })(req, res, next);
 });
 
 // Google login
