@@ -41,7 +41,21 @@ const RecipeDetail = () => {
 
       <p className="text-lg font-semibold mb-2">Category: <span className="text-gray-600">{recipe.strCategory}</span></p>
       <p className="text-lg font-semibold mb-4">Origin: <span className="text-gray-600">{recipe.strArea}</span></p>
-
+      <h2 className="text-2xl font-semibold mt-8 mb-3 text-yellow-800">Ingredients</h2>
+        <div className="flex flex-wrap gap-2">
+        {Array.from({ length: 20 }).map((_, i) => {
+            const ingredient = recipe[`strIngredient${i + 1}`];
+            const measure = recipe[`strMeasure${i + 1}`];
+            return ingredient && ingredient.trim() !== '' ? (
+            <span
+                key={i}
+                className="inline-flex items-center px-3 py-1 bg-yellow-100 text-sm text-yellow-800 border border-yellow-300 rounded-full shadow-sm"
+            >
+                {ingredient} {measure && `– ${measure}`}
+            </span>
+            ) : null;
+        })}
+        </div>
       <h2 className="text-2xl font-semibold mt-6 mb-4 text-yellow-800">Instructions</h2>
        <div className="flex flex-col items-center relative mt-6">
         {recipe.strInstructions
@@ -63,21 +77,6 @@ const RecipeDetail = () => {
                 </div>
             </div>
             ))}
-        </div>
-      <h2 className="text-2xl font-semibold mt-8 mb-3 text-yellow-800">Ingredients</h2>
-        <div className="flex flex-wrap gap-2">
-        {Array.from({ length: 20 }).map((_, i) => {
-            const ingredient = recipe[`strIngredient${i + 1}`];
-            const measure = recipe[`strMeasure${i + 1}`];
-            return ingredient && ingredient.trim() !== '' ? (
-            <span
-                key={i}
-                className="inline-flex items-center px-3 py-1 bg-yellow-100 text-sm text-yellow-800 border border-yellow-300 rounded-full shadow-sm"
-            >
-                {ingredient} {measure && `– ${measure}`}
-            </span>
-            ) : null;
-        })}
         </div>
     </div>
   );
