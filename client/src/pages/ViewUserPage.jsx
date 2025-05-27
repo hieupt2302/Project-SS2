@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
+import EditRecipeModal from '../components/EditRecipeModal';
+import { checkUserSession } from '../../utils/auth';
 
 const ViewUserPage = () => {
   const { id } = useParams();
@@ -8,6 +10,16 @@ const ViewUserPage = () => {
   const [recipes, setRecipes] = useState([]);
   const [editingRecipe, setEditingRecipe] = useState(null);
   const [editForm, setEditForm] = useState({ title: '', ingredients: '', instructions: '' });
+  const [userSession, setUserSession] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const load = async () => {
+      const data = await checkUserSession(navigate);
+      if (data) setUserSession(data);
+    };
+    load();
+  }, []);
 
   const handleDelete = async (recipeId) => {
     if (!confirm('Are you sure you want to delete this recipe?')) return;
@@ -67,7 +79,7 @@ const ViewUserPage = () => {
     fetchData();
   }, [id]);
 
-  if (!user) return <div className="text-center p-10">Loading user data...</div>;
+  if (!userSession || !user) return <div className="text-center p-10">Loading user data...</div>;
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -107,50 +119,14 @@ const ViewUserPage = () => {
           ))}
         </div>
       )}
-      {editingRecipe && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded shadow-lg w-full max-w-lg">
-            <h2 className="text-xl font-semibold mb-4">Edit Recipe</h2>
-
-            <input
-                type="text"
-                className="w-full border p-2 mb-2"
-                value={editForm.title}
-                onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                placeholder="Title"
-            />
-            <textarea
-                className="w-full border p-2 mb-2"
-                rows="3"
-                value={editForm.ingredients}
-                onChange={(e) => setEditForm({ ...editForm, ingredients: e.target.value })}
-                placeholder="Ingredients"
-            />
-            <textarea
-                className="w-full border p-2 mb-4"
-                rows="4"
-                value={editForm.instructions}
-                onChange={(e) => setEditForm({ ...editForm, instructions: e.target.value })}
-                placeholder="Instructions"
-            />
-
-            <div className="flex justify-end gap-2">
-                <button
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-                onClick={() => setEditingRecipe(null)}
-                >
-                Cancel
-                </button>
-                <button
-                className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                onClick={handleEditSave}
-                >
-                Save
-                </button>
-            </div>
-            </div>
-        </div>
-        )}
+      <EditRecipeModal
+        isOpen={!!editingRecipe}
+        onClose={() => setEditingRecipe(null)}
+        recipe={editingRecipe}
+        onSave={(id, updated) => {
+          setRecipes(prev => prev.map(r => r.id === id ? { ...r, ...updated } : r)); // for ViewUserPage
+        }}
+      />
     </div>
   );
 };

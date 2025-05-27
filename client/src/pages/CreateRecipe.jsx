@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Upload, ImagePlus, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { checkUserSession } from '../../utils/auth';
 
 const CreateRecipe = () => {
   const [form, setForm] = useState({
@@ -13,6 +15,16 @@ const CreateRecipe = () => {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const load = async () => {
+      const data = await checkUserSession(navigate);
+      if (data) setUser(data);
+    };
+    load();
+  }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -52,6 +64,8 @@ const CreateRecipe = () => {
       setLoading(false);
     }
   };
+
+  if (!user) return <div className="p-6 text-center text-gray-500">Loading...</div>;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusCircle } from 'lucide-react';
-import { checkUser } from '../../utils/auth';
+import { PlusCircle, LogOut } from 'lucide-react';
+import axios from 'axios';
+import { checkUserSession } from '../../utils/auth';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -9,7 +10,7 @@ const Navbar = () => {
 
   useEffect(() => {
     const load = async () => {
-      const user = await checkUser();
+      const user = await checkUserSession(); // Don't redirect here
       if (user) setCurrentUser(user);
     };
     load();
@@ -18,6 +19,16 @@ const Navbar = () => {
   const handleProfileClick = () => {
     if (!currentUser) return;
     navigate(currentUser.role === 'admin' ? '/admin-dashboard' : '/user-dashboard');
+  };
+
+  const handleLogout = async () => {
+    try {
+      await axios.post('http://localhost:5000/auth/logout', {}, { withCredentials: true });
+      setCurrentUser(null);
+      navigate('/auth');
+    } catch (err) {
+      alert('Logout failed');
+    }
   };
 
   const profileImage = currentUser?.imageUrl
@@ -42,13 +53,26 @@ const Navbar = () => {
       {/* Right Section */}
       <div className="flex items-center space-x-4">
         {/* Create Button */}
-        <button
-          onClick={() => navigate('/create')}
-          className="flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md shadow"
-        >
-          <PlusCircle className="w-5 h-5" />
-          Create
-        </button>
+        {currentUser && (
+          <button
+            onClick={() => navigate('/create')}
+            className="flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md shadow"
+          >
+            <PlusCircle className="w-5 h-5" />
+            Create
+          </button>
+        )}
+
+        {/* Logout Button */}
+        {currentUser && (
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1 text-yellow-800 hover:text-yellow-600 font-medium"
+          >
+            <LogOut className="w-5 h-5" />
+            Logout
+          </button>
+        )}
 
         {/* Profile Image */}
         {currentUser && (
@@ -65,4 +89,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-

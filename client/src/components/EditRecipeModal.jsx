@@ -1,22 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 
 const EditRecipeModal = ({ isOpen, onClose, recipe, onSave }) => {
-  const [form, setForm] = useState(recipe || { title: '', ingredients: '', instructions: '' });
-  
-  // Edit image upload
+  const [form, setForm] = useState({
+    title: '',
+    ingredients: '',
+    instructions: '',
+  });
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
 
-
-  useEffect(() => {
-    if (recipe) setForm(recipe);
-  }, [recipe]);
-
   useEffect(() => {
     if (recipe) {
-        setForm(recipe);
-        setPreview(`http://localhost:5000${recipe.imageUrl || ''}`);
+      setForm({
+        title: recipe.title,
+        ingredients: recipe.ingredients,
+        instructions: recipe.instructions,
+      });
+      setPreview(recipe.imageUrl ? `http://localhost:5000${recipe.imageUrl}` : null);
     }
   }, [recipe]);
 
@@ -26,7 +27,6 @@ const EditRecipeModal = ({ isOpen, onClose, recipe, onSave }) => {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (!file) return;
     setImage(file);
     setPreview(URL.createObjectURL(file));
   };
@@ -41,23 +41,17 @@ const EditRecipeModal = ({ isOpen, onClose, recipe, onSave }) => {
     if (image) formData.append('image', image);
 
     try {
-        const res = await axios.put(
-        `http://localhost:5000/api/recipes/${recipe.id}`,
-        formData,
-        {
-            withCredentials: true,
-            headers: {
-            'Content-Type': 'multipart/form-data',
-            },
-        }
-        );
-        onSave(recipe.id, res.data.recipe); // return updated recipe from server
-        onClose();
+      await axios.put(`http://localhost:5000/api/recipes/${recipe.id}`, formData, {
+        withCredentials: true,
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      onSave(recipe.id, { ...form, imageUrl: image ? `/uploads/${image.name}` : recipe.imageUrl });
+      onClose();
     } catch (err) {
-        alert('Update failed: ' + err.message);
+      alert('Update failed: ' + err.message);
     }
   };
-
 
   if (!isOpen) return null;
 
@@ -65,6 +59,7 @@ const EditRecipeModal = ({ isOpen, onClose, recipe, onSave }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg w-full max-w-lg shadow-lg space-y-4">
         <h2 className="text-xl font-semibold text-gray-800">Edit Recipe</h2>
+
         <input
           type="text"
           name="title"
@@ -89,18 +84,10 @@ const EditRecipeModal = ({ isOpen, onClose, recipe, onSave }) => {
           rows="4"
           placeholder="Instructions"
         />
-        <div>
-        <label className="text-sm font-medium text-gray-600 mb-1 block">Change Image</label>
-        <div className="flex items-center gap-4">
-            <label className="cursor-pointer bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-4 py-2 rounded-xl border border-yellow-300 shadow inline-block">
-            Upload New
-            <input type="file" accept="image/*" hidden onChange={handleImageChange} />
-            </label>
-            {preview && (
-            <img src={preview} alt="Preview" className="w-20 h-20 object-cover rounded-md border" />
-            )}
-        </div>
-        </div>
+
+        <input type="file" accept="image/*" onChange={handleImageChange} className='bg-blue-500 text-white py-2 px-10 w-full text-center rounded-2xl'/>
+        {preview && <img src={preview} alt="Preview" className="w-full h-32 object-cover rounded" />}
+
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="text-gray-500 hover:underline">Cancel</button>
           <button type="submit" className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">Save</button>

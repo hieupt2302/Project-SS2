@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import EditRecipeModal from '../components/EditRecipeModal';
+import { checkUserSession } from '../../utils/auth';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -12,7 +14,17 @@ const AdminDashboard = () => {
   const [form, setForm] = useState({ name: '', email: '', role: 'user' });
   const [editingRecipe, setEditingRecipe] = useState(null);
   const [recipeForm, setRecipeForm] = useState({ title: '', ingredients: '', instructions: '' });
+  const [user, setUser] = useState(null);  // check user
 
+  // check current user session
+  useEffect(() => {
+    const load = async () => {
+      const data = await checkUserSession(navigate);
+      if (data) setUser(data);
+    };
+    load();
+  }, []);
+  
   const openRecipeModal = (recipe) => {
     setEditingRecipe(recipe);
     setRecipeForm({
@@ -96,6 +108,7 @@ const AdminDashboard = () => {
   };
 
   console.log(currentUser?.role)
+  if (!user) return <div className="p-6 text-center text-gray-500">Loading...</div>;
 
   return (
     <div className="p-6 max-w-screen-lg mx-auto">
@@ -245,49 +258,14 @@ const AdminDashboard = () => {
         </div>
 
         {/* EDITING MODAL */}
-        {editingRecipe && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
-              <h2 className="text-xl font-semibold mb-4">Edit Recipe</h2>
-
-              <input
-                className="w-full border p-2 mb-2"
-                placeholder="Title"
-                value={recipeForm.title}
-                onChange={(e) => setRecipeForm({ ...recipeForm, title: e.target.value })}
-              />
-              <textarea
-                className="w-full border p-2 mb-2"
-                rows="3"
-                placeholder="Ingredients"
-                value={recipeForm.ingredients}
-                onChange={(e) => setRecipeForm({ ...recipeForm, ingredients: e.target.value })}
-              />
-              <textarea
-                className="w-full border p-2 mb-4"
-                rows="4"
-                placeholder="Instructions"
-                value={recipeForm.instructions}
-                onChange={(e) => setRecipeForm({ ...recipeForm, instructions: e.target.value })}
-              />
-
-              <div className="flex justify-end gap-2">
-                <button
-                  className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-                  onClick={() => setEditingRecipe(null)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                  onClick={handleRecipeUpdate}
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <EditRecipeModal
+          isOpen={!!editingRecipe}
+          onClose={() => setEditingRecipe(null)}
+          recipe={editingRecipe}
+          onSave={(id, updated) => {
+            setAllRecipes(prev => prev.map(r => r.id === id ? { ...r, ...updated } : r)); // for AdminDashboard
+          }}
+        />
     </div>
   );
 };

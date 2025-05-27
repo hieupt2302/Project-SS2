@@ -57,9 +57,14 @@ router.get('/me', (req, res) => {
 
 
 // Logout
-router.get('/logout', (req, res) => {
-  req.logout(() => {
-    res.redirect('/');
+router.post('/logout', (req, res) => {
+  req.logout((err) => {
+    if (err) return res.status(500).json({ error: 'Logout failed' });
+    req.session.destroy((err) => {
+      if (err) return res.status(500).json({ error: 'Session destroy failed' });
+      res.clearCookie('connect.sid'); // Optional: clears session cookie
+      res.json({ message: 'Logged out' });
+    });
   });
 });
 

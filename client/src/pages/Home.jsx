@@ -3,11 +3,25 @@ import SearchBar from '../components/Search';
 import RecipeCard from '../components/RecipeCard';
 import axios from 'axios';
 import HeroCarousel from '../components/HeroCarousel';
+import { useNavigate } from 'react-router-dom';
+import { checkUserSession } from '../../utils/auth';
 
 const Home = () => {
   const [query, setQuery] = useState('');
   const [tags, setTags] = useState([]);
   const [recipes, setRecipes] = useState([]);
+
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const load = async () => {
+      const data = await checkUserSession(navigate);
+      if (data) setUser(data);
+    };
+    load();
+  }, []);
+
 
   const fetchRecipes = async () => {
     try {
@@ -58,6 +72,8 @@ const Home = () => {
   useEffect(() => {
     fetchRecipes();
   }, [query, tags]);
+
+  if (!user) return <div className="p-6 text-center text-gray-500">Loading...</div>;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">

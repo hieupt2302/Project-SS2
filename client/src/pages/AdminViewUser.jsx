@@ -1,11 +1,22 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
+import { checkUserSession } from '../../utils/auth';
 
 const AdminViewUser = () => {
   const { id } = useParams();
   const [user, setUser] = useState(null);
   const [recipes, setRecipes] = useState([]);
+  const navigate = useNavigate();
+  const [userSession, setUserSession] = useState(null);
+
+  useEffect(() => {
+    const load = async () => {
+      const data = await checkUserSession(navigate);
+      if (data) setUserSession(data);
+    };
+    load();
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -17,7 +28,7 @@ const AdminViewUser = () => {
     fetchData();
   }, [id]);
 
-  if (!user) return <div>Loading...</div>;
+  if (!userSession || !user) return <div className="p-6 text-center text-gray-500">Loading...</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto">

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { checkUser } from '../../utils/auth';
+import { checkUser, checkUserSession } from '../../utils/auth';
 import axios from 'axios';
 import { Pencil, Trash } from 'lucide-react';
 import EditRecipeModal from '../components/EditRecipeModal';
@@ -11,6 +11,15 @@ const UserDashboard = () => {
   const navigate = useNavigate();
   const [editingRecipe, setEditingRecipe] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userSession, setUserSession] = useState(null);
+
+   useEffect(() => {
+    const load = async () => {
+      const data = await checkUserSession(navigate);
+      if (data) setUserSession(data);
+    };
+    load();
+  }, []);
 
   const handleEdit = (recipe) => {
     setEditingRecipe(recipe);
@@ -49,7 +58,7 @@ const UserDashboard = () => {
     load();
   }, []);
 
-  if (!user) return <div className="text-center mt-10 text-gray-500">Loading...</div>;
+  if (!userSession || !user) return <div className="p-6 text-center text-gray-500">Loading...</div>;
 
   return (
     <div className="min-h-screen bg-gradient-to-tr from-blue-50 to-purple-100 p-6">
