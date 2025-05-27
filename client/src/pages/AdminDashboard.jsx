@@ -1,11 +1,22 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
+
   const [users, setUsers] = useState([]);
   const [currentUser, setCurrentUser] = useState(null); // 🔥 store logged-in user
   const [editingUser, setEditingUser] = useState(null);
+  const [allRecipes, setAllRecipes] = useState([]);
   const [form, setForm] = useState({ name: '', email: '', role: 'user' });
+
+  useEffect(() => {
+    if (currentUser?.role === 'admin') {
+      axios.get('http://localhost:5000/api/recipes/all', { withCredentials: true })
+        .then(res => setAllRecipes(res.data));
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     fetchCurrentUser();
@@ -14,8 +25,10 @@ const AdminDashboard = () => {
 
   const fetchCurrentUser = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/auth/google/callback', { withCredentials: true }); // Adjust to match your route that returns current user
-      setCurrentUser(res.data.user || res.data); // depends on your response structure
+      const res = await axios.get('http://localhost:5000/auth/me', {
+        withCredentials: true,
+      });
+      setCurrentUser(res.data.user || res.data);
     } catch (err) {
       console.error('User not logged in');
     }
@@ -151,6 +164,38 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* all recipe */}
+      <h2 className="text-xl font-semibold mb-4 mt-10 text-yellow-800">📚 All Recipes</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {allRecipes.map(recipe => (
+            <div key={recipe.id} className="bg-white p-4 rounded shadow-md">
+              <img
+                src={`http://localhost:5000${recipe.imageUrl}`}
+                alt={recipe.title}
+                className="w-full h-40 object-cover rounded mb-3"
+              />
+              <h3 className="text-lg font-bold">{recipe.title}</h3>
+              <p className="text-sm text-gray-600 line-clamp-2">{recipe.ingredients}</p>
+              <p className="text-sm mt-2">
+                By: {recipe.User ? (
+                  <button
+                    className="text-blue-600 hover:underline"
+                    onClick={() => navigate(`/admin/view-user/${recipe.User.id}`)}
+                  >
+                    {recipe.User.name}
+                  </button>
+                ) : (
+                  <span className="text-gray-400">Unknown</span>
+                )}
+              </p>
+              <div className="flex justify-end gap-2 mt-3">
+                <button className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">📝</button>
+                <button className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">🗑️</button>
+              </div>
+            </div>
+          ))}
+        </div>
     </div>
   );
 };

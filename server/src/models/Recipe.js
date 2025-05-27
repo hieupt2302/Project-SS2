@@ -13,4 +13,10 @@ const Recipe = sequelize.define('Recipe', {
   timestamps: true
 });
 
+// 👇 ADD THIS
+const { User } = require('./User');
+
+Recipe.belongsTo(User, { foreignKey: 'createdBy' });
+User.hasMany(Recipe, { foreignKey: 'createdBy' });
+
 module.exports = { Recipe };

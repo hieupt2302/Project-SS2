@@ -1,5 +1,6 @@
 // server/src/controllers/recipeController.js
 const { Recipe } = require('../models/Recipe');
+const { User } = require('../models/User');
 
 exports.createRecipe = async (req, res) => {
   try {
@@ -64,7 +65,6 @@ exports.updateRecipe = async (req, res) => {
   }
 };
 
-
 exports.deleteRecipe = async (req, res) => {
   const { id } = req.params;
 
@@ -78,6 +78,22 @@ exports.deleteRecipe = async (req, res) => {
 
     await recipe.destroy();
     res.json({ message: 'Recipe deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// for admin
+exports.getAllRecipesWithUsers = async (req, res) => {
+  try {
+    const recipes = await Recipe.findAll({
+      include: {
+        model: User,
+        attributes: ['id', 'name', 'email'],
+      },
+      order: [['createdAt', 'DESC']],
+    });
+    res.json(recipes);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
