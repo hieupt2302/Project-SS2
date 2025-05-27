@@ -1,8 +1,10 @@
+// server/src/routes/recipeRoutes.js
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const router = express.Router();
-const { createRecipe } = require('../controllers/recipeController');
+const { createRecipe, getMyRecipes } = require('../controllers/recipeController');
+const { ensureAuth } = require('../middlewares/authMiddleware');
 
 // Multer config for image uploads
 const storage = multer.diskStorage({
@@ -14,5 +16,6 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 router.post('/', upload.single('image'), createRecipe);
+router.get('/mine', ensureAuth, getMyRecipes);
 
 module.exports = router;
