@@ -45,7 +45,8 @@ exports.updateRecipe = async (req, res) => {
     const recipe = await Recipe.findByPk(req.params.id);
     if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
 
-    if (recipe.createdBy !== req.user.id) {
+    // ✅ Allow either creator OR admin
+    if (recipe.createdBy !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Unauthorized' });
     }
 
@@ -69,10 +70,12 @@ exports.deleteRecipe = async (req, res) => {
   const { id } = req.params;
 
   try {
+    // console.log('req.user:', req.user);
     const recipe = await Recipe.findByPk(id);
     if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
 
-    if (recipe.createdBy !== req.user.id) {
+    // ✅ Allow either creator or admin
+    if (recipe.createdBy !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Unauthorized' });
     }
 

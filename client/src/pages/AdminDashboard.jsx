@@ -10,6 +10,17 @@ const AdminDashboard = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [allRecipes, setAllRecipes] = useState([]);
   const [form, setForm] = useState({ name: '', email: '', role: 'user' });
+  const [editingRecipe, setEditingRecipe] = useState(null);
+  const [recipeForm, setRecipeForm] = useState({ title: '', ingredients: '', instructions: '' });
+
+  const openRecipeModal = (recipe) => {
+    setEditingRecipe(recipe);
+    setRecipeForm({
+      title: recipe.title,
+      ingredients: recipe.ingredients,
+      instructions: recipe.instructions,
+    });
+  };
 
   useEffect(() => {
     if (currentUser?.role === 'admin') {
@@ -53,6 +64,35 @@ const AdminDashboard = () => {
     await axios.put(`http://localhost:5000/api/users/${editingUser.id}`, form);
     setEditingUser(null);
     fetchUsers();
+  };
+
+  // EDIT & DELETE
+  const handleRecipeDelete = async (id) => {
+    if (!confirm('Are you sure you want to delete this recipe?')) return;
+    try {
+      await axios.delete(`http://localhost:5000/api/recipes/${id}`, {
+        withCredentials: true,
+      });
+      setAllRecipes(prev => prev.filter(recipe => recipe.id !== id));
+    } catch (err) {
+      alert('Delete failed: ' + err.message);
+    }
+  };
+
+  const handleRecipeUpdate = async () => {
+    try {
+      await axios.put(
+        `http://localhost:5000/api/recipes/${editingRecipe.id}`,
+        recipeForm,
+        { withCredentials: true }
+      );
+      setAllRecipes(prev =>
+        prev.map(r => r.id === editingRecipe.id ? { ...r, ...recipeForm } : r)
+      );
+      setEditingRecipe(null);
+    } catch (err) {
+      alert('Update failed: ' + err.message);
+    }
   };
 
   console.log(currentUser?.role)
@@ -190,12 +230,64 @@ const AdminDashboard = () => {
                 )}
               </p>
               <div className="flex justify-end gap-2 mt-3">
-                <button className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">📝</button>
-                <button className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">🗑️</button>
+                <button
+                  onClick={() => openRecipeModal(recipe)}
+                  className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                >📝</button>
+
+                <button
+                  onClick={() => handleRecipeDelete(recipe.id)}
+                  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                >🗑️</button>
               </div>
             </div>
           ))}
         </div>
+
+        {/* EDITING MODAL */}
+        {editingRecipe && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
+              <h2 className="text-xl font-semibold mb-4">Edit Recipe</h2>
+
+              <input
+                className="w-full border p-2 mb-2"
+                placeholder="Title"
+                value={recipeForm.title}
+                onChange={(e) => setRecipeForm({ ...recipeForm, title: e.target.value })}
+              />
+              <textarea
+                className="w-full border p-2 mb-2"
+                rows="3"
+                placeholder="Ingredients"
+                value={recipeForm.ingredients}
+                onChange={(e) => setRecipeForm({ ...recipeForm, ingredients: e.target.value })}
+              />
+              <textarea
+                className="w-full border p-2 mb-4"
+                rows="4"
+                placeholder="Instructions"
+                value={recipeForm.instructions}
+                onChange={(e) => setRecipeForm({ ...recipeForm, instructions: e.target.value })}
+              />
+
+              <div className="flex justify-end gap-2">
+                <button
+                  className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                  onClick={() => setEditingRecipe(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                  onClick={handleRecipeUpdate}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 };
