@@ -10,6 +10,7 @@ import RecipeDetail from './components/RecipeDetail';
 import CreateRecipe from './pages/CreateRecipe';
 import AuthPage from './pages/AuthPage';
 import UserDashboard from './pages/UserDashboard';
+import ViewUserPage from './pages/ViewUserPage';
 
 function App() {
 
@@ -20,6 +21,7 @@ function App() {
       <Navbar/>
         <Routes>
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/view-user/:id" element={<ViewUserPage />} /> {/* ✅ add this */}
           <Route path="/user-dashboard" element={<UserDashboard />} />
           <Route path="/home" element={<Home />} />
           <Route path="/auth" element={<AuthPage />} />
