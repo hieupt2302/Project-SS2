@@ -14,6 +14,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const recipeRoutes = require('./routes/recipeRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
+const historyRoutes = require('./routes/historyRoutes');
 const { fetchAndSaveUsers, fetchAndSaveRecipes } = require('./config/fetchRecipe');
 
 const app = express();
@@ -50,7 +51,7 @@ app.use('/admin', adminRoutes)
 app.use('/recipes', recipeRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/reviews', reviewRoutes);
-
+app.use('/history', historyRoutes);
 // Kết nối với cơ sở dữ liệu và khởi động server
 sequelize.sync().then(async () => {
   // await fetchAndSaveUsers();  // Gọi hàm fetchAndSaveUsers sau khi đồng bộ hóa database
