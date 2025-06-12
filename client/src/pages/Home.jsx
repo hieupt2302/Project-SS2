@@ -10,6 +10,7 @@ const Home = () => {
   const [query, setQuery] = useState('');
   const [tags, setTags] = useState([]);
   const [recipes, setRecipes] = useState([]);
+  const [dbRecipes, setDbRecipes] = useState([]);
 
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -21,7 +22,6 @@ const Home = () => {
     };
     load();
   }, []);
-
 
   const fetchRecipes = async () => {
     try {
@@ -70,6 +70,18 @@ const Home = () => {
   };
 
   useEffect(() => {
+  const load = async () => {
+    const data = await checkUserSession(navigate);
+    if (data) setUser(data);
+
+    // Fetch DB recipes for everyone
+    const dbRes = await axios.get('http://localhost:5000/api/recipes/public');
+    setDbRecipes(dbRes.data);
+  };
+  load();
+}, []);
+
+  useEffect(() => {
     fetchRecipes();
   }, [query, tags]);
 
@@ -90,8 +102,29 @@ const Home = () => {
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8">
+        {dbRecipes.map((recipe) => (
+          <RecipeCard
+            key={`db-${recipe.id}`}
+            recipe={{
+              id: recipe.id,
+              title: recipe.title,
+              image: `http://localhost:5000${recipe.imageUrl}`,
+              category: recipe.User?.name || 'Unknown',
+              isDb: true,
+            }}
+          />
+        ))}
         {recipes.map((recipe) => (
-          <RecipeCard key={recipe.idMeal} recipe={recipe} />
+          <RecipeCard
+            key={`api-${recipe.idMeal}`}
+            recipe={{
+              id: recipe.idMeal,
+              title: recipe.strMeal,
+              image: recipe.strMealThumb,
+              category: recipe.strCategory,
+              isDb: false,
+            }}
+          />
         ))}
       </div>
     </div>

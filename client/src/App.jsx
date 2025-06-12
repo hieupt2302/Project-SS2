@@ -11,6 +11,7 @@ import CreateRecipe from './pages/CreateRecipe';
 import AuthPage from './pages/AuthPage';
 import UserDashboard from './pages/UserDashboard';
 import ViewUserPage from './pages/ViewUserPage';
+import DbRecipeDetail from './components/DbRecipeDetail';
 
 function App() {
 
@@ -27,6 +28,8 @@ function App() {
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/create" element={<CreateRecipe />} />
           <Route path="/recipes/:id" element={<RecipeDetail />} />
+          <Route path="/recipes/db/:id" element={<DbRecipeDetail />} />
+
         </Routes>
     </BrowserRouter>
     </>
