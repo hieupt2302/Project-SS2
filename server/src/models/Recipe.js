@@ -13,10 +13,15 @@ const Recipe = sequelize.define('Recipe', {
   timestamps: true
 });
 
-// 👇 ADD THIS
+// relationship with other users' recipes
 const { User } = require('./User');
 
 Recipe.belongsTo(User, { foreignKey: 'createdBy' });
 User.hasMany(Recipe, { foreignKey: 'createdBy' });
+
+// relationship with comments
+Recipe.associate = (models) => {
+  Recipe.hasMany(models.Comment, { foreignKey: 'recipeId' });
+};
 
 module.exports = { Recipe };

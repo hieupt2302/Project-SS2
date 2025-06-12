@@ -3,6 +3,7 @@ const session = require('express-session');
 const passport = require('passport');
 const cors = require('cors');
 require('dotenv').config();
+require('./models/initAssociations');
 
 require('./config/passport');
 
@@ -12,6 +13,7 @@ const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const settingRoutes = require('./routes/settingRoutes');
 const recipeRoutes = require('./routes/recipeRoutes');
+const commentRoutes = require('./routes/commentRoutes');
 
 const app = express();
 
@@ -43,6 +45,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/settings', settingRoutes);
 app.use('/api/recipes', recipeRoutes);
 app.use('/uploads', express.static('public/uploads'));
+app.use('/api/comments', commentRoutes);
 
 sequelize.sync().then(() => {
   app.listen(5000, () => console.log('Server started at http://localhost:5000'));

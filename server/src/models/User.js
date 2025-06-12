@@ -13,4 +13,9 @@ const User = sequelize.define('User', {
   timestamps: false // nếu không dùng updatedAt
 });
 
+// relationship with comments from users
+User.associate = (models) => {
+  User.hasMany(models.Comment, { foreignKey: 'userId' });
+};
+
 module.exports = { User };
