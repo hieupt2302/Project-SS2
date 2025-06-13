@@ -36,6 +36,7 @@ const AuthPage = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
+      <div className=' bg-white flex flex-col items-center pt-5 rounded-2xl'>
       <h1 className="text-2xl font-bold mb-6">{isSignup ? 'Sign Up' : 'Sign In'}</h1>
 
       <a
@@ -45,7 +46,7 @@ const AuthPage = () => {
         {isSignup ? 'Sign up with Google' : 'Sign in with Google'}
       </a>
 
-      <form onSubmit={handleSubmit} className="bg-white shadow-md rounded px-8 pt-6 pb-8 w-96">
+      <form onSubmit={handleSubmit} className=" shadow-md rounded px-8 pt-6 pb-8 w-96">
         {isSignup && (
           <input
             name="name"
@@ -80,7 +81,7 @@ const AuthPage = () => {
         </button>
         {error && <p className="text-red-500 mt-2">{error}</p>}
       </form>
-
+      </div>
       <p className="mt-4 text-sm text-gray-600">
         {isSignup ? 'Already have an account?' : 'Don\'t have an account?'}{' '}
         <button onClick={toggleMode} className="text-blue-500 hover:underline">

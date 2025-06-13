@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { checkUser, checkUserSession } from '../../utils/auth';
 import axios from 'axios';
-import { Pencil, Trash } from 'lucide-react';
+import { Heart, Pencil, Trash } from 'lucide-react';
 import EditRecipeModal from '../components/EditRecipeModal';
 
 const UserDashboard = () => {
@@ -12,13 +12,52 @@ const UserDashboard = () => {
   const [editingRecipe, setEditingRecipe] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userSession, setUserSession] = useState(null);
+  const [favoriteRecipes, setFavoriteRecipes] = useState([]);
 
-   useEffect(() => {
-    const load = async () => {
-      const data = await checkUserSession(navigate);
-      if (data) setUserSession(data);
+  useEffect(() => {
+    const loadUserAndRecipes = async () => {
+      const session = await checkUserSession(navigate);
+      if (!session) return;
+      setUserSession(session);
+
+      const user = await checkUser();
+      if (!user) return navigate('/auth');
+      setUser(user);
+
+      const favRes = await axios.get('http://localhost:5000/api/favorites/my-favorites', { withCredentials: true });
+      const favorites = favRes.data;
+
+      const recipesRes = await axios.get('http://localhost:5000/api/recipes/mine', { withCredentials: true });
+      const recipesWithFav = recipesRes.data.map((r) => {
+        const isFav = favorites.some((f) => f.recipeId == r.id && f.isDb);
+        return { ...r, isFavorite: isFav };
+      });
+      setRecipes(recipesWithFav);
+
+      const dbFavs = favorites.filter((f) => f.isDb);
+      const apiFavs = favorites.filter((f) => !f.isDb);
+
+      const dbDetails = await Promise.all(
+        dbFavs.map((f) =>
+          axios
+            .get(`http://localhost:5000/api/recipes/${f.recipeId}`, { withCredentials: true })
+            .then((res) => ({ ...res.data, isDb: true }))
+        )
+      );
+
+      const apiDetails = await Promise.all(
+        apiFavs.map((f) =>
+          axios
+            .get(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${f.recipeId}`)
+            .then((res) => (res.data.meals?.[0] ? { ...res.data.meals[0], isDb: false } : null))
+        )
+      );
+
+      const allFavorites = [...dbDetails, ...apiDetails].filter(Boolean);
+      setFavoriteRecipes(allFavorites);
     };
-    load();
+
+    loadUserAndRecipes();
   }, []);
 
   const handleEdit = (recipe) => {
@@ -28,7 +67,6 @@ const UserDashboard = () => {
 
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this recipe?')) return;
-
     try {
       await axios.delete(`http://localhost:5000/api/recipes/${id}`, { withCredentials: true });
       setRecipes(recipes.filter((r) => r.id !== id));
@@ -37,26 +75,57 @@ const UserDashboard = () => {
     }
   };
 
-  // for edit save
   const handleSave = (id, updated) => {
     setRecipes((prev) =>
       prev.map((r) => (r.id === id ? { ...r, ...updated } : r))
     );
   };
 
-  useEffect(() => {
-    const load = async () => {
-      const data = await checkUser();
-      if (!data) return navigate('/auth');
-      setUser(data);
+  const toggleFavorite = async (recipeId, isDb) => {
+    try {
+      const res = await axios.post(
+        'http://localhost:5000/api/favorites/toggle',
+        { recipeId, isDb },
+        { withCredentials: true }
+      );
 
-      const res = await axios.get('http://localhost:5000/api/recipes/mine', {
+      const isNowFav = res.data.status === 'added';
+
+      if (isDb) {
+        setRecipes((prev) =>
+          prev.map((r) => (r.id === recipeId ? { ...r, isFavorite: isNowFav } : r))
+        );
+      }
+
+      const favRes = await axios.get('http://localhost:5000/api/favorites/my-favorites', {
         withCredentials: true,
       });
-      setRecipes(res.data);
-    };
-    load();
-  }, []);
+
+      const dbFavs = favRes.data.filter((f) => f.isDb);
+      const apiFavs = favRes.data.filter((f) => !f.isDb);
+
+      const dbDetails = await Promise.all(
+        dbFavs.map((f) =>
+          axios
+            .get(`http://localhost:5000/api/recipes/${f.recipeId}`, { withCredentials: true })
+            .then((res) => ({ ...res.data, isDb: true }))
+        )
+      );
+
+      const apiDetails = await Promise.all(
+        apiFavs.map((f) =>
+          axios
+            .get(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${f.recipeId}`)
+            .then((res) => (res.data.meals?.[0] ? { ...res.data.meals[0], isDb: false } : null))
+        )
+      );
+
+      const allFavorites = [...dbDetails, ...apiDetails].filter(Boolean);
+      setFavoriteRecipes(allFavorites);
+    } catch (err) {
+      console.error('Toggle favorite failed:', err);
+    }
+  };
 
   if (!userSession || !user) return <div className="p-6 text-center text-gray-500">Loading...</div>;
 
@@ -66,8 +135,58 @@ const UserDashboard = () => {
         <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">👋 Welcome, {user.name}</h1>
         <p className="text-center text-sm text-gray-500 mb-2">Email: {user.email}</p>
         <p className="text-center text-sm text-gray-500 mb-2">
-          Role: <span className={`px-2 py-1 rounded ${user.role === 'admin' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{user.role}</span>
+          Role:{' '}
+          <span
+            className={`px-2 py-1 rounded ${
+              user.role === 'admin'
+                ? 'bg-green-100 text-green-700'
+                : 'bg-yellow-100 text-yellow-700'
+            }`}
+          >
+            {user.role}
+          </span>
         </p>
+      </div>
+
+      {/* Favorite Recipes */}
+      <div className="max-w-3xl mx-auto mt-10 mb-10">
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {favoriteRecipes.map((recipe) => {
+            const isDb = recipe.isDb;
+            const id = isDb ? recipe.id : recipe.idMeal;
+            const image = isDb
+              ? `http://localhost:5000${recipe.imageUrl}`
+              : recipe.strMealThumb;
+            const title = isDb ? recipe.title : recipe.strMeal;
+            const ingredients = isDb ? recipe.ingredients : recipe.strCategory;
+            const instructions = isDb ? recipe.instructions : recipe.strInstructions;
+
+            return (
+              <li key={id} className="bg-white p-4 rounded-xl shadow hover:shadow-md transition">
+                {image && (
+                  <img
+                    src={image}
+                    alt={title}
+                    className="w-full h-40 object-cover rounded-md mb-3"
+                  />
+                )}
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-lg font-bold text-gray-800">{title}</h3>
+                  <button
+                    onClick={() => toggleFavorite(id, isDb)}
+                    className="transition text-red-500"
+                  >
+                    <Heart className="w-6 h-6" fill="red" />
+                  </button>
+                </div>
+                <p className="text-sm text-gray-600 mb-2 line-clamp-2">{ingredients}</p>
+                <p className="text-sm text-gray-500 mb-2 line-clamp-3">
+                  {instructions?.slice(0, 100)}...
+                </p>
+              </li>
+            );
+          })}
+        </ul>
       </div>
 
       {/* User Recipes */}
@@ -77,8 +196,11 @@ const UserDashboard = () => {
           <p className="text-gray-500 text-center">You haven’t created any recipes yet.</p>
         ) : (
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {recipes.map(recipe => (
-              <li key={recipe.id} className="bg-white p-4 rounded-xl shadow hover:shadow-md transition">
+            {recipes.map((recipe) => (
+              <li
+                key={recipe.id}
+                className="bg-white p-4 rounded-xl shadow hover:shadow-md transition"
+              >
                 {recipe.imageUrl && (
                   <img
                     src={`http://localhost:5000${recipe.imageUrl}`}
@@ -86,22 +208,29 @@ const UserDashboard = () => {
                     className="w-full h-40 object-cover rounded-md mb-3"
                   />
                 )}
-                <h3 className="text-lg font-bold text-gray-800">{recipe.title}</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-gray-800">{recipe.title}</h3>
+                  <button
+                    onClick={() => toggleFavorite(recipe.id, true)}
+                    className={`transition ${recipe.isFavorite ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                  >
+                    <Heart className="w-6 h-6" strokeWidth={2} fill={recipe.isFavorite ? 'red' : 'none'} />
+                  </button>
+                </div>
                 <p className="text-sm text-gray-600 mb-2 line-clamp-2">{recipe.ingredients}</p>
                 <p className="text-sm text-gray-500 mb-2 line-clamp-3">{recipe.instructions}</p>
-                {/* Future: Add Edit/Delete buttons here */}
-                <div className="flex justify-end mt-3">
+                <div className="flex justify-end mt-3 gap-2">
                   <button
                     className="text-sm bg-blue-600 py-1 px-5 rounded-2xl hover:underline"
                     onClick={() => handleEdit(recipe)}
                   >
-                    <Pencil className='w-6 h-6 text-white'/>
+                    <Pencil className="w-6 h-6 text-white" />
                   </button>
                   <button
                     className="text-sm bg-red-600 py-1 px-5 rounded-2xl hover:underline"
                     onClick={() => handleDelete(recipe.id)}
                   >
-                    <Trash className='w-6 h-6 text-white'/>
+                    <Trash className="w-6 h-6 text-white" />
                   </button>
                 </div>
               </li>
@@ -110,13 +239,12 @@ const UserDashboard = () => {
         )}
       </div>
 
-      {/* User Recipe Update Modal */}
-        <EditRecipeModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          recipe={editingRecipe}
-          onSave={handleSave}
-        />
+      <EditRecipeModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        recipe={editingRecipe}
+        onSave={handleSave}
+      />
     </div>
   );
 };

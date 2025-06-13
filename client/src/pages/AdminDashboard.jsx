@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import EditRecipeModal from '../components/EditRecipeModal';
 import { checkUserSession } from '../../utils/auth';
+import { Heart } from 'lucide-react';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ const AdminDashboard = () => {
   const [editingRecipe, setEditingRecipe] = useState(null);
   const [recipeForm, setRecipeForm] = useState({ title: '', ingredients: '', instructions: '' });
   const [user, setUser] = useState(null);  // check user
+  const [favoriteRecipes, setFavoriteRecipes] = useState([]);
 
   // check current user session
   useEffect(() => {
@@ -35,11 +37,47 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
+    const loadData = async () => {
+      const [recipesRes, favRes] = await Promise.all([
+        axios.get('http://localhost:5000/api/recipes/all', { withCredentials: true }),
+        axios.get('http://localhost:5000/api/favorites/my-favorites', { withCredentials: true }),
+      ]);
+
+      const favorites = favRes.data;
+
+      const recipesWithFav = recipesRes.data.map((r) => ({
+        ...r,
+        isFavorite: favorites.some((f) => f.recipeId == r.id && f.isDb),
+      }));
+
+      setAllRecipes(recipesWithFav);
+
+      const dbFavs = favorites.filter(f => f.isDb);
+      const apiFavs = favorites.filter(f => !f.isDb);
+
+      const dbDetails = await Promise.all(
+        dbFavs.map(f =>
+          axios.get(`http://localhost:5000/api/recipes/${f.recipeId}`, { withCredentials: true })
+            .then(res => ({ ...res.data, isDb: true }))
+        )
+      );
+
+      const apiDetails = await Promise.all(
+        apiFavs.map(f =>
+          axios.get(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${f.recipeId}`)
+            .then(res => res.data.meals?.[0] ? { ...res.data.meals[0], isDb: false } : null)
+        )
+      );
+
+      const allFavorites = [...dbDetails, ...apiDetails].filter(Boolean);
+      setFavoriteRecipes(allFavorites);
+    };
+
     if (currentUser?.role === 'admin') {
-      axios.get('http://localhost:5000/api/recipes/all', { withCredentials: true })
-        .then(res => setAllRecipes(res.data));
+      loadData();
     }
   }, [currentUser]);
+
 
   useEffect(() => {
     fetchCurrentUser();
@@ -107,6 +145,55 @@ const AdminDashboard = () => {
     }
   };
 
+  // FAVOURITE RECIPE
+  const toggleFavorite = async (recipeId, isDb) => {
+    try {
+      const res = await axios.post(
+        'http://localhost:5000/api/favorites/toggle',
+        { recipeId, isDb },
+        { withCredentials: true }
+      );
+
+      const isNowFav = res.data.status === 'added';
+
+      if (isDb) {
+        setAllRecipes(prev =>
+          prev.map(r =>
+            r.id === recipeId ? { ...r, isFavorite: isNowFav } : r
+          )
+        );
+      }
+
+      const favRes = await axios.get('http://localhost:5000/api/favorites/my-favorites', {
+        withCredentials: true,
+      });
+
+      const dbFavs = favRes.data.filter(f => f.isDb);
+      const apiFavs = favRes.data.filter(f => !f.isDb);
+
+      const dbDetails = await Promise.all(
+        dbFavs.map(f =>
+          axios.get(`http://localhost:5000/api/recipes/${f.recipeId}`, { withCredentials: true })
+            .then(res => ({ ...res.data, isDb: true }))
+        )
+      );
+
+      const apiDetails = await Promise.all(
+        apiFavs.map(f =>
+          axios.get(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${f.recipeId}`)
+            .then(res => res.data.meals?.[0] ? { ...res.data.meals[0], isDb: false } : null)
+        )
+      );
+
+      const allFavorites = [...dbDetails, ...apiDetails].filter(Boolean);
+      setFavoriteRecipes(allFavorites);
+
+    } catch (err) {
+      console.error('Toggle favorite failed:', err);
+    }
+  };
+
+
   console.log(currentUser?.role)
   if (!user) return <div className="p-6 text-center text-gray-500">Loading...</div>;
 
@@ -134,9 +221,6 @@ const AdminDashboard = () => {
                 defaultValue="********"
                 readOnly
               />
-              <button className="mt-2 px-4 py-1 bg-yellow-200 border rounded shadow hover:bg-yellow-300">
-                Save
-              </button>
             </div>
           </div>
         ))}
@@ -218,6 +302,42 @@ const AdminDashboard = () => {
         </div>
       )}
 
+      {/* Fav recipes */}
+      <h2 className="text-xl font-semibold mb-4 text-yellow-800 mt-10">❤️ My Favorite Recipes</h2>
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+          {favoriteRecipes.map(recipe => {
+            const isDb = recipe.isDb;
+            const id = isDb ? recipe.id : recipe.idMeal;
+            const image = isDb ? `http://localhost:5000${recipe.imageUrl}` : recipe.strMealThumb;
+            const title = isDb ? recipe.title : recipe.strMeal;
+            const ingredients = isDb ? recipe.ingredients : recipe.strCategory;
+            const instructions = isDb ? recipe.instructions : recipe.strInstructions;
+
+            return (
+              <li key={id} className="bg-white p-4 rounded-xl shadow hover:shadow-md transition">
+                {image && (
+                  <img
+                    src={image}
+                    alt={title}
+                    className="w-full h-40 object-cover rounded-md mb-3"
+                  />
+                )}
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-lg font-bold text-gray-800">{title}</h3>
+                  <button
+                    onClick={() => toggleFavorite(id, isDb)}
+                    className={`transition text-red-500`}
+                  >
+                    <Heart className="w-6 h-6" fill="red" />
+                  </button>
+                </div>
+                <p className="text-sm text-gray-600 mb-2 line-clamp-2">{ingredients}</p>
+                <p className="text-sm text-gray-500 mb-2 line-clamp-3">{instructions?.slice(0, 100)}...</p>
+              </li>
+            );
+          })}
+        </ul>
+
       {/* all recipe */}
       <h2 className="text-xl font-semibold mb-4 mt-10 text-yellow-800">📚 All Recipes</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -228,7 +348,15 @@ const AdminDashboard = () => {
                 alt={recipe.title}
                 className="w-full h-40 object-cover rounded mb-3"
               />
-              <h3 className="text-lg font-bold">{recipe.title}</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold">{recipe.title}</h3>
+                <button
+                  onClick={() => toggleFavorite(recipe.id, true)}
+                  className={`transition ${recipe.isFavorite ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                >
+                  <Heart className="w-6 h-6" fill={recipe.isFavorite ? 'red' : 'none'} />
+                </button>
+              </div>
               <p className="text-sm text-gray-600 line-clamp-2">{recipe.ingredients}</p>
               <p className="text-sm mt-2">
                 By: {recipe.User ? (
