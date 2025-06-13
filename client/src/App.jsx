@@ -12,6 +12,7 @@ import AuthPage from './pages/AuthPage';
 import UserDashboard from './pages/UserDashboard';
 import ViewUserPage from './pages/ViewUserPage';
 import DbRecipeDetail from './components/DbRecipeDetail';
+import LandingPage from './pages/LandingPage';
 
 function App() {
 
@@ -21,6 +22,7 @@ function App() {
       <BrowserRouter>
       <Navbar/>
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/admin/view-user/:id" element={<ViewUserPage />} /> {/* ✅ add this */}
           <Route path="/user-dashboard" element={<UserDashboard />} />
