@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, MessageCircle, SendHorizonal } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, SendHorizonal } from 'lucide-react';
 
 const RecipeDetail = () => {
   const { id } = useParams();
@@ -11,6 +11,8 @@ const RecipeDetail = () => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const isDb = false;
+
+  const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -27,8 +29,15 @@ const RecipeDetail = () => {
       setComments(res.data);
     };
 
+    const fetchFavorite = async () => {
+      const res = await axios.get('http://localhost:5000/api/favorites/my-favorites', { withCredentials: true });
+      const match = res.data.find(f => f.recipeId === id && f.isDb === false); // or false
+      setIsFavorite(!!match);
+    };
+
     fetchDetails();
     loadComments();
+    fetchFavorite();
   }, [id]);
 
   if (!recipe) return <div className="p-6 text-center">Loading...</div>;
@@ -47,6 +56,15 @@ const RecipeDetail = () => {
     setComments(res.data);
   };
 
+  const toggleFavorite = async () => {
+    const res = await axios.post('http://localhost:5000/api/favorites/toggle', {
+      recipeId: id,
+      isDb,
+    }, { withCredentials: true });
+
+    setIsFavorite(res.data.status === 'added');
+  };
+
   console.log(recipe)
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -57,7 +75,19 @@ const RecipeDetail = () => {
         <ArrowLeft size={18} /> Back
       </button>
 
+      <div className="flex items-center justify-between mb-4">
       <h1 className="text-3xl font-bold mb-4 text-yellow-800">{recipe.strMeal}</h1>
+      <button
+        onClick={toggleFavorite}
+        className="hover:scale-110 transition"
+      >
+        {isFavorite ? (
+          <Heart className="w-7 h-7 text-red-500 fill-red-500" />
+        ) : (
+          <Heart className="w-7 h-7 text-gray-400" />
+        )}
+      </button>
+      </div>
       <img
         src={recipe.strMealThumb}
         alt={recipe.strMeal}

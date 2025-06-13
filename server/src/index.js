@@ -14,6 +14,7 @@ const userRoutes = require('./routes/userRoutes');
 const settingRoutes = require('./routes/settingRoutes');
 const recipeRoutes = require('./routes/recipeRoutes');
 const commentRoutes = require('./routes/commentRoutes');
+const favoriteRoutes = require('./routes/favoriteRoutes');
 
 const app = express();
 
@@ -46,6 +47,8 @@ app.use('/api/settings', settingRoutes);
 app.use('/api/recipes', recipeRoutes);
 app.use('/uploads', express.static('public/uploads'));
 app.use('/api/comments', commentRoutes);
+app.use('/api/favorites', favoriteRoutes);
+
 
 sequelize.sync().then(() => {
   app.listen(5000, () => console.log('Server started at http://localhost:5000'));

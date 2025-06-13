@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, MessageCircle, SendHorizonal } from 'lucide-react';
+import { ArrowLeft, Heart, MessageCircle, SendHorizonal } from 'lucide-react';
 
 const DbRecipeDetail = () => {
   const { id } = useParams();
@@ -11,6 +11,8 @@ const DbRecipeDetail = () => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const isDb = true;
+
+  const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -25,9 +27,15 @@ const DbRecipeDetail = () => {
       const res = await axios.get(`http://localhost:5000/api/comments/${id}?isDb=${isDb}`);
       setComments(res.data);
     };
+    const fetchFavorite = async () => {
+      const res = await axios.get('http://localhost:5000/api/favorites/my-favorites', { withCredentials: true });
+      const match = res.data.find(f => f.recipeId === id && f.isDb === true); // or false
+      setIsFavorite(!!match);
+    };
 
     fetchDetails();
     loadComments();
+    fetchFavorite();
   }, [id]);
 
   const handleSubmitComment = async () => {
@@ -44,6 +52,15 @@ const DbRecipeDetail = () => {
     setComments(res.data);
   };
 
+  const toggleFavorite = async () => {
+    const res = await axios.post('http://localhost:5000/api/favorites/toggle', {
+      recipeId: id,
+      isDb,
+    }, { withCredentials: true });
+
+    setIsFavorite(res.data.status === 'added');
+  };
+
   if (!recipe) return <div className="p-6 text-center">Loading...</div>;
 
 
@@ -56,7 +73,19 @@ const DbRecipeDetail = () => {
         <ArrowLeft size={18} /> Back
       </button>
 
-      <h1 className="text-3xl font-bold mb-4 text-yellow-800">{recipe.title}</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-3xl font-bold mb-4 text-yellow-800">{recipe.title}</h1>
+        <button
+          onClick={toggleFavorite}
+          className="hover:scale-110 transition"
+        >
+          {isFavorite ? (
+            <Heart className="w-7 h-7 text-red-500 fill-red-500" />
+          ) : (
+            <Heart className="w-7 h-7 text-gray-400" />
+          )}
+        </button>
+      </div>
       {recipe.imageUrl && (
         <img
           src={`http://localhost:5000${recipe.imageUrl}`}
