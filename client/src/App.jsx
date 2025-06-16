@@ -13,6 +13,7 @@ import UserDashboard from './pages/UserDashboard';
 import ViewUserPage from './pages/ViewUserPage';
 import DbRecipeDetail from './components/DbRecipeDetail';
 import LandingPage from './pages/LandingPage';
+import WeeklyPlanPage from './pages/WeeklyPlanPage';
 
 function App() {
 
@@ -29,6 +30,7 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/create" element={<CreateRecipe />} />
+          <Route path="/meal-planning" element={<WeeklyPlanPage />} />
           <Route path="/recipes/:id" element={<RecipeDetail />} />
           <Route path="/recipes/db/:id" element={<DbRecipeDetail />} />
 

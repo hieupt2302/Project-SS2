@@ -16,6 +16,7 @@ const recipeRoutes = require('./routes/recipeRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const favoriteRoutes = require('./routes/favoriteRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const weeklyPlanRoutes = require('./routes/weeklyPlanRoutes');
 
 const app = express();
 
@@ -50,6 +51,7 @@ app.use('/uploads', express.static('public/uploads'));
 app.use('/api/comments', commentRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/weekly-plan', weeklyPlanRoutes);
 
 
 sequelize.sync().then(() => {

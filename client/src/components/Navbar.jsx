@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusCircle, LogOut } from 'lucide-react';
+import { PlusCircle, LogOut, CalendarDays } from 'lucide-react';
 import axios from 'axios';
 import { checkUserSession } from '../../utils/auth';
 import { Bell } from 'lucide-react';
@@ -84,6 +84,17 @@ const Navbar = () => {
           >
             <PlusCircle className="w-5 h-5" />
             Create
+          </button>
+        )}
+
+        {/*  */}
+        {currentUser && (
+          <button
+            onClick={() => navigate('/meal-planning')}
+            className="flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md shadow"
+          >
+            <CalendarDays className="w-5 h-5" />
+            Meal Planning
           </button>
         )}
 
