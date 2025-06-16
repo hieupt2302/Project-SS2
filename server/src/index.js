@@ -2,12 +2,14 @@ const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
 const cors = require('cors');
+const cron = require('node-cron');
 require('dotenv').config();
 require('./models/initAssociations');
 
 require('./config/passport');
 
 const sequelize = require('./config/database');
+const sendDailyMealNotificationsController = require('./controllers/sendDailyMealNotificationsController');
 
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -56,4 +58,11 @@ app.use('/api/weekly-plan', weeklyPlanRoutes);
 
 sequelize.sync().then(() => {
   app.listen(5000, () => console.log('Server started at http://localhost:5000'));
+
+  // Run every day at 7:00 AM
+  // Run every day at 13:19 PM is 20 13 * * *
+  cron.schedule('0 7 * * *', () => {
+    console.log('[🕖] Running daily meal plan notifications...');
+    sendDailyMealNotificationsController();
+  });
 });

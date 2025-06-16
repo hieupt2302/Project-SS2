@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Trash2 } from 'lucide-react';
 import SearchModal from '../components/SearchModal';
 
-const days = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
+const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const meals = ['Breakfast', 'Lunch', 'Dinner'];
 
 const WeeklyPlanPage = () => {
