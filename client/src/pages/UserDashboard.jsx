@@ -14,6 +14,40 @@ const UserDashboard = () => {
   const [userSession, setUserSession] = useState(null);
   const [favoriteRecipes, setFavoriteRecipes] = useState([]);
 
+  // change password
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess('');
+    if (newPassword.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+    try {
+      await axios.post(
+        'http://localhost:5000/auth/change-password',
+        { password: newPassword },
+        { withCredentials: true }
+      );
+      setPasswordSuccess('Password changed successfully!');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => setShowPasswordModal(false), 1500);
+    } catch (err) {
+      setPasswordError('Failed to change password');
+    }
+  };
+
   useEffect(() => {
     const loadUserAndRecipes = async () => {
       const session = await checkUserSession(navigate);
@@ -146,6 +180,14 @@ const UserDashboard = () => {
             {user.role}
           </span>
         </p>
+        <div className="flex justify-center mt-4">
+          <button
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            onClick={() => setShowPasswordModal(true)}
+          >
+            Đổi mật khẩu
+          </button>
+        </div>
       </div>
 
       {/* Favorite Recipes */}
@@ -245,7 +287,49 @@ const UserDashboard = () => {
         recipe={editingRecipe}
         onSave={handleSave}
       />
+    {/* password update */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
+            <h2 className="text-lg font-bold mb-4">Đổi mật khẩu</h2>
+            <form onSubmit={handleChangePassword}>
+              <input
+                type="password"
+                className="w-full border rounded px-3 py-2 mb-2"
+                placeholder="Mật khẩu mới"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+              <input
+                type="password"
+                className="w-full border rounded px-3 py-2 mb-2"
+                placeholder="Nhập lại mật khẩu"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+              {passwordError && <div className="text-red-500 text-sm mb-2">{passwordError}</div>}
+              {passwordSuccess && <div className="text-green-500 text-sm mb-2">{passwordSuccess}</div>}
+              <div className="flex justify-end gap-2 mt-2">
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded bg-gray-200"
+                  onClick={() => setShowPasswordModal(false)}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded bg-blue-600 text-white"
+                >
+                  Lưu
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 };
 
