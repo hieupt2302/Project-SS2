@@ -1,23 +1,18 @@
-const { generateToken } = require("../middlewares/jwt");
-const loginSuccess = (req, res) => {
-  const token = generateToken(req.user);
+// server/src/controller/authController.js
 
-        // Set JWT cookie (httpOnly)
-  res.cookie('jwt', token, {
-    httpOnly: true,
-    secure: false, // true if using HTTPS
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 1000 // 1 hour
+exports.loginSuccess = (req, res) => {
+  if (req.user) {
+    res.status(200).json({
+      message: "Login successful",
+      user: req.user
     });
-  console.log('JWT:', token);
-  res.redirect('http://localhost:5173/settings'); // Redirect to settings page after login
+  } else {
+    res.status(401).json({ message: "Not authenticated" });
+  }
 };
-  
-const logout = (req, res) => {
-  req.logout(err => {
-    if (err) return res.status(500).json({ message: 'Logout failed' });
-    res.json({ message: 'Logged out' });
+
+exports.logout = (req, res) => {
+  req.logout(() => {
+    res.redirect('http://localhost:5173'); // or send JSON if frontend expects
   });
 };
-  
-module.exports = { loginSuccess, logout };

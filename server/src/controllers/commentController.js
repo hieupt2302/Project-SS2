@@ -1,23 +1,47 @@
-const { Comment } = require('../models/associations');
+const { Comment } = require('../models/Comment');
+const { User } = require('../models/User');
+const { Recipe } = require('../models/Recipe');
+const { Notification } = require('../models/Notification');
 
-exports.getReviewById = async (req, res) => {
+exports.createComment = async (req, res) => {
+  const { recipeId, isDb, content } = req.body;
   try {
-    const review = await Comment.findByPk(req.params.id);
-    if (!review) return res.status(404).json({ message: 'Review not found' });
-    res.json(review);
+    const comment = await Comment.create({
+      recipeId, isDb, content, userId: req.user.id
+    });
+
+    // Notify the recipe owner (if DB recipe)
+    if (isDb) {
+      const recipe = await Recipe.findByPk(recipeId);
+      if (recipe && recipe.createdBy !== req.user.id) {
+        await Notification.create({
+          userId: recipe.createdBy,
+          fromUserId: req.user.id,
+          recipeId,
+          isDb,
+          message: `commented on your recipe: "${content.slice(0, 30)}..."`,
+        });
+      }
+    }
+
+    res.status(201).json(comment);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch review' });
+    res.status(500).json({ error: err.message });
   }
 };
 
-exports.deleteReview = async (req, res) => {
+exports.getCommentsByRecipe = async (req, res) => {
+  const { recipeId } = req.params;
+  const isDb = req.query.isDb === 'true';
   try {
-    const review = await Comment.findByPk(req.params.id);
-    if (!review) return res.status(404).json({ message: 'Review not found' });
-
-    await review.destroy();
-    res.json({ message: 'Review deleted' });
+    const comments = await Comment.findAll({
+      where: { recipeId, isDb },
+      include: { model: User, attributes: ['id', 'name'] },
+      order: [['createdAt', 'DESC']]
+    });
+    res.json(comments);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to delete review' });
+    console.error('[COMMENTS ERROR]', err);
+    res.status(500).json({ error: err.message });
   }
 };

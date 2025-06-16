@@ -1,45 +1,67 @@
+// server/src/config/passport.js
+
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const { Users } = require('../models/User'); // Adjust the path as necessary
+const bcrypt = require('bcryptjs');
+const { User } = require('../models/User');
+const { Op } = require('sequelize');
+require('dotenv').config();
 
-module.exports = (passport) => {
-  passport.use(new GoogleStrategy({
-    clientID: '942650690084-nuq19oe3idpp9jq88cigsef98d54tj5c.apps.googleusercontent.com',
-    clientSecret: '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',
-    callbackURL: '/auth/google/callback'
-  },
-  async (accessToken, refreshToken, profile, done) => {
-    try {
-      const [user] = await Users.findOrCreate({
-        where: { email: profile.emails[0].value },
-        defaults: {
-          googleId: profile.id,
-          email: profile.emails[0].value
-        }
-      });
-      return done(null, user);
-    } catch (err) {
-      return done(err, null);
-    }
-  }));
+// Serialize/Deserialize
+passport.serializeUser((user, done) => done(null, user.id));
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findByPk(id);
+    done(null, user);
+  } catch (err) {
+    done(err);
+  }
+});
 
-  passport.serializeUser((user, done) => {
-    console.log('Serializing user:', user);
-    done(null, user.id)
-  });
-  passport.deserializeUser(async (id, done) => {
-    console.log('Deserializing user with id:', id);
-    const user1 = await Users.findByPk(id);
-    console.log('User found:', user1);
+// Local Strategy
+passport.use(new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
+  try {
+    const user = await User.findOne({ where: { email } });
+    if (!user || !user.password) return done(null, false, { message: 'Invalid credentials' });
+    const match = await bcrypt.compare(password, user.password);
+    return match ? done(null, user) : done(null, false, { message: 'Invalid credentials' });
+  } catch (err) {
+    return done(err);
+  }
+}));
 
-    try {
-      console.log('Deserializing user with ID:', id);
-      const user = await Users.findByPk(id);
-      if (!user) {
-        return done(new Error('User not found'), null);
+// Google Strategy
+// Đảm bảo rằng nếu email đã tồn tại thì không tạo mới user trùng lặp.
+passport.use(new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: '/auth/google/callback'
+}, async (accessToken, refreshToken, profile, done) => {
+  try {
+    const email = profile.emails[0].value;
+
+    let user = await User.findOne({
+      where: {
+        [Op.or]: [{ googleId: profile.id }, { email }]
       }
-      done(null, user);
-    } catch (err) {
-      done(err, null);
+    });
+
+    if (!user) {
+      user = await User.create({
+        googleId: profile.id,
+        name: profile.displayName,
+        email,
+        role: 'user'
+      });
+    } else if (!user.googleId) {
+      // Link Google ID to existing email-based user
+      user.googleId = profile.id;
+      await user.save();
     }
-  });
-};
+
+    return done(null, user);
+  } catch (err) {
+    return done(err);
+  }
+}));

@@ -1,33 +1,10 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React from 'react';
+import axios from 'axios';
 
 const LoginPage = () => {
-  const { login } = useAuth();
-  const navigate = useNavigate();
   const handleGoogleLogin = () => {
     window.location.href = 'http://localhost:5000/auth/google';
   };
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch('http://localhost:5000/user', {
-          method: 'GET',
-          credentials: 'include'
-        });
-        const data = await res.json();
-        console.log('User:', data);
-        if (data && data.id) {
-          login(data);
-          navigate('/settings');
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-  
-    fetchUser();
-  }, []);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">

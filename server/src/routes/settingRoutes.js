@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { changePassword } = require('../controllers/settingsController');
+const { ensureAuth } = require('../middlewares/authMiddleware');
 
-// Chỉ user đã login mới gọi được
-router.post('/change-password', changePassword);
+router.post('/change-password', ensureAuth, changePassword);
 
 module.exports = router;

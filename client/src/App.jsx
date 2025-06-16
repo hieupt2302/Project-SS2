@@ -1,29 +1,42 @@
 import { useState } from 'react'
-import LoginPage from './pages/LoginPage'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import SettingsPage from './pages/settingPages';
-import HomePage from './pages/HomePage';
-import { AuthProvider } from './context/AuthContext';
-import PrivateRoute from './routes/PrivateRoute';
+// import './App.css'
+
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import AdminDashboard from './pages/AdminDashboard';
+import './index.css'
+import Navbar from './components/Navbar';
+import Home from './pages/Home';
+import RecipeDetail from './components/RecipeDetail';
+import CreateRecipe from './pages/CreateRecipe';
+import AuthPage from './pages/AuthPage';
+import UserDashboard from './pages/UserDashboard';
+import ViewUserPage from './pages/ViewUserPage';
+import DbRecipeDetail from './components/DbRecipeDetail';
+import LandingPage from './pages/LandingPage';
+import WeeklyPlanPage from './pages/WeeklyPlanPage';
 
 function App() {
+
   return (
-    <AuthProvider>
-      <Router>
+    <>
+      {/* <LoginPage /> */}
+      <BrowserRouter>
+      <Navbar/>
         <Routes>
-          <Route path="/" element={<LoginPage />} />
-          <Route path="/home" element={<HomePage />} />
-          <Route
-            path="/settings"
-            element={ 
-              <PrivateRoute>
-                <SettingsPage />
-              </PrivateRoute>
-            }
-          />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/view-user/:id" element={<ViewUserPage />} /> {/* ✅ add this */}
+          <Route path="/user-dashboard" element={<UserDashboard />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/create" element={<CreateRecipe />} />
+          <Route path="/meal-planning" element={<WeeklyPlanPage />} />
+          <Route path="/recipes/:id" element={<RecipeDetail />} />
+          <Route path="/recipes/db/:id" element={<DbRecipeDetail />} />
+
         </Routes>
-      </Router>
-    </AuthProvider>
+    </BrowserRouter>
+    </>
   )
 }
 

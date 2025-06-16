@@ -2,59 +2,69 @@ const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
 const cors = require('cors');
+const cron = require('node-cron');
 require('dotenv').config();
-// import các file cấu hình khác
-const sequelize = require('./config/database');
-require('./config/passport')(passport);
+require('./models/initAssociations');
 
-// Import các model và associations
-require('./models/associations');  // Kết nối các model và associations
+require('./config/passport');
+
+const sequelize = require('./config/database');
+const sendDailyMealNotificationsController = require('./controllers/sendDailyMealNotificationsController');
+
 const authRoutes = require('./routes/authRoutes');
-const adminRoutes = require('./routes/adminRoutes');
+const userRoutes = require('./routes/userRoutes');
+const settingRoutes = require('./routes/settingRoutes');
 const recipeRoutes = require('./routes/recipeRoutes');
+const commentRoutes = require('./routes/commentRoutes');
+const favoriteRoutes = require('./routes/favoriteRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
-const reviewRoutes = require('./routes/reviewRoutes');
-const historyRoutes = require('./routes/historyRoutes');
-const { fetchAndSaveUsers, fetchAndSaveRecipes } = require('./config/fetchRecipe');
+const weeklyPlanRoutes = require('./routes/weeklyPlanRoutes');
+const viewedHistory = require('./routes/historyRoutes');
 
 const app = express();
 
-// Cấu hình CORS để chỉ chấp nhận yêu cầu từ localhost:5173
 app.use(cors({
-  origin: 'http://localhost:5173',  // Chỉ cho phép yêu cầu từ http://localhost:5173
+  origin: 'http://localhost:5173',
   methods: 'GET,POST,PUT,DELETE',
-  credentials: true,  // Cho phép cookie được gửi trong yêu cầu từ client
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Cấu hình body parser cho các yêu cầu JSON
+app.use(express.urlencoded({ extended: true })); // <-- THÊM DÒNG NÀY
 app.use(express.json());
 
-// Cấu hình session cho việc quản lý đăng nhập
 app.use(session({
-  secret: 'Hieu@23204',  // Lấy giá trị từ .env
-  resave: true,
-  saveUninitialized: true,
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
   cookie: {
-    httpOnly: true,
     secure: false, // true nếu dùng HTTPS
-    maxAge: 24 * 60 * 60 * 1000,
+    httpOnly: true
   }
 }));
 
-// Cấu hình passport cho xác thực
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Đăng ký các routes
 app.use('/auth', authRoutes);
-app.use('/admin', adminRoutes)
-app.use('/recipes', recipeRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/settings', settingRoutes);
+app.use('/api/recipes', recipeRoutes);
+app.use('/uploads', express.static('public/uploads'));
+app.use('/api/comments', commentRoutes);
+app.use('/api/favorites', favoriteRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/reviews', reviewRoutes);
-app.use('/history', historyRoutes);
-// Kết nối với cơ sở dữ liệu và khởi động server
-sequelize.sync().then(async () => {
-  // await fetchAndSaveUsers();  // Gọi hàm fetchAndSaveUsers sau khi đồng bộ hóa database
-  // await fetchAndSaveRecipes();  // Gọi hàm fetchAndSaveRecipes sau khi đồng bộ hóa database
+app.use('/api/weekly-plan', weeklyPlanRoutes);
+app.use('/api/history', viewedHistory);
+
+
+sequelize.sync().then(() => {
   app.listen(5000, () => console.log('Server started at http://localhost:5000'));
+
+  // Run every day at 7:00 AM
+  // Run every day at 13:19 PM is 20 13 * * *
+  cron.schedule('0 7 * * *', () => {
+    console.log('[🕖] Running daily meal plan notifications...');
+    sendDailyMealNotificationsController();
+  });
 });
