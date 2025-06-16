@@ -33,9 +33,22 @@ const DbRecipeDetail = () => {
       setIsFavorite(!!match);
     };
 
+    const viewedHistory = async () => {
+    try {
+      console.log('Saving viewed history for recipe ID:', id);
+      await axios.post(
+        'http://localhost:5000/api/history/viewed',
+        { recipeId: id, isDb: true },
+        { withCredentials: true }
+      );
+    } catch (err) {
+      console.error('Failed to save viewed history dsadas', err);
+    }}
+
     fetchDetails();
     loadComments();
     fetchFavorite();
+    viewedHistory();
   }, [id]);
 
   const handleSubmitComment = async () => {

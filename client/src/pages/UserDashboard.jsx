@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { checkUser, checkUserSession } from '../../utils/auth';
 import axios from 'axios';
-import { Heart, Pencil, Trash } from 'lucide-react';
+import { Clock, Heart, Pencil, Trash } from 'lucide-react';
 import EditRecipeModal from '../components/EditRecipeModal';
 
 const UserDashboard = () => {
@@ -13,6 +13,9 @@ const UserDashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userSession, setUserSession] = useState(null);
   const [favoriteRecipes, setFavoriteRecipes] = useState([]);
+
+  // view history check
+  const [viewedHistory, setViewedHistory] = useState([]);
 
   // change password
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -50,49 +53,68 @@ const UserDashboard = () => {
 
   useEffect(() => {
     const loadUserAndRecipes = async () => {
-      const session = await checkUserSession(navigate);
-      if (!session) return;
-      setUserSession(session);
+      try {
+        const session = await checkUserSession(navigate);
+        if (!session) return;
+        setUserSession(session);
 
-      const user = await checkUser();
-      if (!user) return navigate('/auth');
-      setUser(user);
+        const user = await checkUser();
+        if (!user) return navigate('/auth');
+        setUser(user);
 
-      const favRes = await axios.get('http://localhost:5000/api/favorites/my-favorites', { withCredentials: true });
-      const favorites = favRes.data;
+        const favRes = await axios.get('http://localhost:5000/api/favorites/my-favorites', { withCredentials: true });
+        const favorites = favRes.data;
 
-      const recipesRes = await axios.get('http://localhost:5000/api/recipes/mine', { withCredentials: true });
-      const recipesWithFav = recipesRes.data.map((r) => {
-        const isFav = favorites.some((f) => f.recipeId == r.id && f.isDb);
-        return { ...r, isFavorite: isFav };
-      });
-      setRecipes(recipesWithFav);
+        const recipesRes = await axios.get('http://localhost:5000/api/recipes/mine', { withCredentials: true });
+        const recipesWithFav = recipesRes.data.map((r) => {
+          const isFav = favorites.some((f) => f.recipeId == r.id && f.isDb);
+          return { ...r, isFavorite: isFav };
+        });
+        setRecipes(recipesWithFav);
 
-      const dbFavs = favorites.filter((f) => f.isDb);
-      const apiFavs = favorites.filter((f) => !f.isDb);
+        const dbFavs = favorites.filter((f) => f.isDb);
+        const apiFavs = favorites.filter((f) => !f.isDb);
 
-      const dbDetails = await Promise.all(
-        dbFavs.map((f) =>
-          axios
-            .get(`http://localhost:5000/api/recipes/${f.recipeId}`, { withCredentials: true })
-            .then((res) => ({ ...res.data, isDb: true }))
-        )
-      );
+        const dbDetails = await Promise.all(
+          dbFavs.map((f) =>
+            axios
+              .get(`http://localhost:5000/api/recipes/${f.recipeId}`, { withCredentials: true })
+              .then((res) => ({ ...res.data, isDb: true }))
+          )
+        );
 
-      const apiDetails = await Promise.all(
-        apiFavs.map((f) =>
-          axios
-            .get(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${f.recipeId}`)
-            .then((res) => (res.data.meals?.[0] ? { ...res.data.meals[0], isDb: false } : null))
-        )
-      );
+        const apiDetails = await Promise.all(
+          apiFavs.map((f) =>
+            axios
+              .get(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${f.recipeId}`)
+              .then((res) => (res.data.meals?.[0] ? { ...res.data.meals[0], isDb: false } : null))
+          )
+        );
 
-      const allFavorites = [...dbDetails, ...apiDetails].filter(Boolean);
-      setFavoriteRecipes(allFavorites);
+        const allFavorites = [...dbDetails, ...apiDetails].filter(Boolean);
+        setFavoriteRecipes(allFavorites);
+      } catch (error) {
+        console.log(error)
+      }
     };
 
     loadUserAndRecipes();
   }, []);
+
+  useEffect(() => {
+    // history watch
+    const loadUserAndRecipes = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/history/viewed', { withCredentials: true });
+        setViewedHistory(res.data);
+      }
+      catch (error) {
+        setViewedHistory([])
+        
+      }
+    }
+    loadUserAndRecipes();
+  }, [])
 
   const handleEdit = (recipe) => {
     setEditingRecipe(recipe);
@@ -275,6 +297,37 @@ const UserDashboard = () => {
                     <Trash className="w-6 h-6 text-white" />
                   </button>
                 </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* History Viewed */}
+      <div className="max-w-3xl mx-auto mt-10 mb-10">
+        <h2 className="text-xl font-semibold mb-4 text-blue-800 flex items-center gap-2">
+          <Clock className="w-5 h-5" /> Lịch sử đã xem
+        </h2>
+        {viewedHistory.length === 0 ? (
+          <p className="text-gray-500 text-center">Bạn chưa xem công thức nào gần đây.</p>
+        ) : (
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {viewedHistory.map((item) => (
+              <li key={item.id} className="bg-white p-4 rounded-xl shadow hover:shadow-md transition">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-bold text-gray-800">
+                    {item.recipeTitle || `Recipe #${item.recipeId}`}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {new Date(item.viewedAt).toLocaleString()}
+                  </span>
+                </div>
+                <a
+                href={item.isDb ? `/recipes/db/${item.recipeId}` : `/recipes/${item.recipeId}`}
+                  className="text-blue-600 hover:underline text-sm"
+                >
+                  Xem lại công thức
+                </a>
               </li>
             ))}
           </ul>

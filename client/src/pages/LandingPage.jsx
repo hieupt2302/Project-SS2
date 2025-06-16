@@ -11,6 +11,9 @@ const LandingPage = () => {
   const handleTryNow = () => {
     window.location.href = 'http://localhost:5173/auth';
   };
+  const handleBrowse = () => {
+    window.location.href = 'http://localhost:5173/home';
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -42,7 +45,9 @@ const LandingPage = () => {
                 >
                   Want to Try?
                 </button>
-                <button className="border-2 border-yellow-800 text-yellow-800 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-yellow-800 hover:text-white transition-all duration-300">
+                <button 
+                onClick={handleBrowse}
+                className="border-2 border-yellow-800 text-yellow-800 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-yellow-800 hover:text-white transition-all duration-300">
                   Browse Recipes
                 </button>
               </div>
