@@ -88,6 +88,7 @@ const UserDashboard = () => {
         );
 
         const allFavorites = [...dbDetails, ...apiDetails].filter(Boolean);
+        console.log('All favorites:', allFavorites);
         setFavoriteRecipes(allFavorites);
       } catch (error) {
         console.log(error)
@@ -220,6 +221,8 @@ const UserDashboard = () => {
           {favoriteRecipes.map((recipe) => {
             const isDb = recipe.isDb;
             const id = isDb ? recipe.id : recipe.idMeal;
+            const linkToRecipe = isDb
+              ? `/recipes/db/${id}` : `/recipes/${id}`;
             const image = isDb
               ? `http://localhost:5000${recipe.imageUrl}`
               : recipe.strMealThumb;
@@ -229,26 +232,33 @@ const UserDashboard = () => {
 
             return (
               <li key={id} className="bg-white/90 p-4 rounded-2xl shadow-lg hover:shadow-xl transition border border-orange-100">
-                {image && (
-                  <img
-                    src={image}
-                    alt={title}
-                    className="w-full h-40 object-cover rounded-xl mb-3 shadow"
-                  />
-                )}
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="text-lg font-bold text-gray-800">{title}</h3>
-                  <button
-                    onClick={() => toggleFavorite(id, isDb)}
-                    className="transition text-orange-500 hover:scale-110"
-                  >
-                    <Heart className="w-6 h-6" fill="orange" />
-                  </button>
-                </div>
-                <p className="text-sm text-gray-600 mb-2 line-clamp-2">{ingredients}</p>
-                <p className="text-sm text-gray-500 mb-2 line-clamp-3">
-                  {instructions?.slice(0, 100)}...
-                </p>
+                <a
+                  href={linkToRecipe}
+                  className="block w-full h-full"
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                >
+                  {image && (
+                    <img
+                      src={image}
+                      alt={title}
+                      className="w-full h-40 object-cover rounded-xl mb-3 shadow"
+                    />
+                  )}
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-lg font-bold text-gray-800">{title}</h3>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-2 line-clamp-2">{ingredients}</p>
+                  <p className="text-sm text-gray-500 mb-2 line-clamp-3">
+                    {instructions?.slice(0, 100)}...
+                  </p>
+                </a>
+                <button
+                  onClick={() => toggleFavorite(id, isDb)}
+                  className="transition text-orange-500 hover:scale-110 mt-2 absolute top-3 right-3"
+                  type="button"
+                >
+                  <Heart className="w-6 h-6" fill="orange" />
+                </button>
               </li>
             );
           })}
