@@ -1,62 +1,55 @@
-import { useState } from "react";
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import axios from 'axios';
+import { checkUserSession } from '../../utils/auth';
 
-export default function CreateRecipePage() {
-  const [recipe, setRecipe] = useState({ title: "", description: "", ingredients: "" });
+const AdminViewUser = () => {
+  const { id } = useParams();
+  const [user, setUser] = useState(null);
+  const [recipes, setRecipes] = useState([]);
+  const navigate = useNavigate();
+  const [userSession, setUserSession] = useState(null);
 
-  const handleChange = (e) => {
-    setRecipe({ ...recipe, [e.target.name]: e.target.value });
-  };
+  useEffect(() => {
+    const load = async () => {
+      const data = await checkUserSession(navigate);
+      if (data) setUserSession(data);
+    };
+    load();
+  }, []);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const { title, description, ingredients } = recipe;
-    const createRecipe = async () => {
-      try {
-        const response = await fetch("/api/recipes", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ title, description, ingredients }),
-        });
-        if (!response.ok) {
-          throw new Error("Failed to create recipe");
-        }
-        const data = await response.json();
-        console.log("Recipe created:", data);
-      } catch (error) {
-        console.error("Error creating recipe:", error);
-      }
-    }
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      const userRes = await axios.get(`http://localhost:5000/api/users/${id}`, { withCredentials: true });
+      const recipeRes = await axios.get(`http://localhost:5000/api/recipes/user/${id}`, { withCredentials: true });
+      setUser(userRes.data);
+      setRecipes(recipeRes.data);
+    };
+    fetchData();
+  }, [id]);
+
+  if (!userSession || !user) return <div className="p-6 text-center text-gray-500">Loading...</div>;
 
   return (
-    <div className="max-w-xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Create Recipe</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          name="title"
-          placeholder="Title"
-          className="w-full border p-2 rounded"
-          onChange={handleChange}
-        />
-        <textarea
-          name="description"
-          placeholder="Description"
-          className="w-full border p-2 rounded"
-          onChange={handleChange}
-        />
-        <textarea
-          name="ingredients"
-          placeholder="Ingredients (comma-separated)"
-          className="w-full border p-2 rounded"
-          onChange={handleChange}
-        />
-        <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-          Create
-        </button>
-      </form>
+    <div className="p-6 max-w-4xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">👤 {user.name}'s Profile</h1>
+      <p>Email: {user.email}</p>
+      <p>Role: {user.role}</p>
+      <p>Joined: {new Date(user.createdAt).toLocaleString()}</p>
+
+      <hr className="my-6" />
+      <h2 className="text-xl font-semibold mb-4">📋 Recipes</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {recipes.map(r => (
+          <div key={r.id} className="bg-white p-4 shadow rounded">
+            <img src={`http://localhost:5000${r.imageUrl}`} alt={r.title} className="w-full h-40 object-cover rounded mb-3" />
+            <h3 className="text-lg font-bold">{r.title}</h3>
+            <p className="text-sm text-gray-600">{r.ingredients}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
-}
+};
+
+export default AdminViewUser;

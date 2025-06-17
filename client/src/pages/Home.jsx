@@ -19,6 +19,10 @@ const Home = () => {
     const load = async () => {
       const data = await checkUserSession(navigate);
       if (data) setUser(data);
+
+      // Fetch DB recipes for everyone
+      const dbRes = await axios.get('http://localhost:5000/api/recipes/public');
+      setDbRecipes(dbRes.data);
     };
     load();
   }, []);
@@ -70,38 +74,40 @@ const Home = () => {
   };
 
   useEffect(() => {
-  const load = async () => {
-    const data = await checkUserSession(navigate);
-    if (data) setUser(data);
-
-    // Fetch DB recipes for everyone
-    const dbRes = await axios.get('http://localhost:5000/api/recipes/public');
-    setDbRecipes(dbRes.data);
-  };
-  load();
-}, []);
-
-  useEffect(() => {
     fetchRecipes();
   }, [query, tags]);
 
-  if (!user) return <div className="p-6 text-center text-gray-500">Loading...</div>;
+  if (!user)
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-orange-400 border-solid"></div>
+        <span className="ml-4 text-lg text-orange-500 font-semibold">Loading...</span>
+      </div>
+    );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-10">
       <HeroCarousel />
-      <h1 className="text-3xl font-bold mb-6 text-yellow-800">
-        Explore Delicious Recipes
-      </h1>
+      <div className="flex flex-col items-center mt-6 mb-10">
+        <h1 className="text-4xl font-extrabold mb-2 text-orange-700 tracking-tight drop-shadow">
+          🍽️ Explore Delicious Recipes
+        </h1>
+        <p className="text-gray-500 text-lg mb-6 text-center max-w-2xl">
+          Discover, search and filter thousands of recipes from around the world. Find your next favorite meal!
+        </p>
+        <div className="w-full max-w-2xl">
+          <SearchBar
+            query={query}
+            onQueryChange={(e) => setQuery(e.target.value)}
+            tags={tags}
+            setTags={setTags}
+          />
+        </div>
+      </div>
 
-      <SearchBar
-        query={query}
-        onQueryChange={(e) => setQuery(e.target.value)}
-        tags={tags}
-        setTags={setTags}
-      />
+      <hr className="my-8 border-orange-200" />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
         {dbRecipes.map((recipe) => (
           <RecipeCard
             key={`db-${recipe.id}`}
@@ -112,6 +118,7 @@ const Home = () => {
               category: recipe.User?.name || 'Unknown',
               isDb: true,
             }}
+            className="hover:scale-105 transition-transform duration-200"
           />
         ))}
         {recipes.map((recipe) => (
@@ -124,12 +131,18 @@ const Home = () => {
               category: recipe.strCategory,
               isDb: false,
             }}
+            className="hover:scale-105 transition-transform duration-200"
           />
         ))}
       </div>
+
+      {(dbRecipes.length === 0 && recipes.length === 0) && (
+        <div className="text-center text-gray-400 mt-16 text-lg">
+          No recipes found. Try searching for something else!
+        </div>
+      )}
     </div>
   );
 };
-
 
 export default Home;
